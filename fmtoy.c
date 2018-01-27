@@ -64,9 +64,10 @@ void fmtoy_load_voice(struct fmtoy *fmtoy, char *filename) {
 			struct fmtoy_opm_voice *opmv = &fmtoy->opm_voices[fmtoy->num_voices];
 			opmv->rl_fb_con = 3 << 6 | v->ch_fl << 3 | v->ch_con;
 			opmv->pms_ams = v->ch_pms << 4 | v->ch_ams;
+			int ops[4] = { 0, 2, 1, 3 };
 			for(int j = 0; j < 4; j++) {
 				struct fmtoy_opm_voice_operator *fop = &opmv->operators[j];
-				struct opm_file_operator *op = &v->operators[j];
+				struct opm_file_operator *op = &v->operators[ops[j]];
 				fop->dt1_mul = op->dt1 << 4 | op->mul;
 				fop->tl = op->tl;
 				fop->ks_ar = op->ks << 6 | op->ar;
