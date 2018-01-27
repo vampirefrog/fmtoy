@@ -60,6 +60,43 @@ void fmtoy_load_voice(struct fmtoy *fmtoy, char *filename) {
 			if(fmtoy->num_voices > 127) continue;
 			struct opm_file_voice *v = &opm.voices[i];
 
+			int unused = 1;
+			for(int k = 0; k < 4; k++) {
+				if(
+					v->operators[k].ar != 31 ||
+					v->operators[k].d1r != 0 ||
+					v->operators[k].d2r != 0 ||
+					v->operators[k].rr != 4 ||
+					v->operators[k].d1l != 0 ||
+					v->operators[k].tl != 0 ||
+					v->operators[k].ks != 0 ||
+					v->operators[k].mul != 1 ||
+					v->operators[k].dt1 != 0 ||
+					v->operators[k].dt2 != 0 ||
+					v->operators[k].ams_en != 0
+				) {
+					unused = 0;
+					break;
+				}
+			}
+
+			if(unused &&
+				v->lfo_lfrq == 0 &&
+				v->lfo_amd == 0 &&
+				v->lfo_pmd == 0 &&
+				v->lfo_wf == 0 &&
+				v->lfo_nfrq == 0 &&
+				v->ch_pan == 64 &&
+				v->ch_fl == 0 &&
+				v->ch_con == 0 &&
+				v->ch_ams == 0 &&
+				v->ch_pms == 0 &&
+				v->ch_slot == 64 &&
+				v->ch_ne == 0
+			) {
+				continue;
+			}
+
 			// OPM voices
 			struct fmtoy_opm_voice *opmv = &fmtoy->opm_voices[fmtoy->num_voices];
 			opmv->rl_fb_con = 3 << 6 | v->ch_fl << 3 | v->ch_con;
