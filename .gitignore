@@ -4,5 +4,6 @@ insdump
 dmpdump
 tfidump
 y12dump
+fmtoy_jack
 *.d
 *.o
