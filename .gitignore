@@ -1,0 +1,8 @@
+vgm2opm
+opmdump
+insdump
+dmpdump
+tfidump
+y12dump
+*.d
+*.o
