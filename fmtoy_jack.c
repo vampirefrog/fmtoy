@@ -145,11 +145,13 @@ void midi_action(snd_seq_t *seq_handle) {
 				fmtoy_pitch_bend(&fmtoy, ev->data.control.channel, ev->data.control.value);
 				break;
 			case SND_SEQ_EVENT_PGMCHANGE:
+				if(opt_verbose)
+					printf("%d: Program %d\n", ev->data.control.channel, ev->data.control.value);
 				fmtoy_program_change(&fmtoy, ev->data.control.channel, ev->data.control.value);
 				break;
 			case SND_SEQ_EVENT_CONTROLLER:
 				if(opt_verbose)
-					printf("CC 0x%02x (%s) %d\n", ev->data.control.param, midi_cc_name(ev->data.control.param), ev->data.control.value);
+					printf("%d: CC 0x%02x (%s) %d\n", ev->data.control.channel, ev->data.control.param, midi_cc_name(ev->data.control.param), ev->data.control.value);
 				fmtoy_cc(&fmtoy, ev->data.control.channel, ev->data.control.param, ev->data.control.value);
 				break;
 		}
