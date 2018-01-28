@@ -18,10 +18,6 @@ jack_port_t *output_ports[2];
 unsigned long sr;
 
 struct fmtoy fmtoy;
-stream_sample_t* DUMMYBUF[0x02] = {NULL, NULL};
-uint8_t IsVGMInit = 1;
-uint8_t CHIP_SAMPLING_MODE = 0;
-uint8_t CHIP_SAMPLE_RATE = 0;
 
 int process(jack_nframes_t nframes, void *arg) {
 	sample_t *buffers[2];
@@ -171,7 +167,6 @@ static void init_jack(void) {
 	output_ports[1] = jack_port_register(client, "Right", JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
 
 	sr = jack_get_sample_rate(client);
-	CHIP_SAMPLE_RATE = sr;
 }
 
 static void activate_jack(void) {
