@@ -39,6 +39,28 @@ struct fmtoy_chip_channel {
 	uint32_t frames;
 };
 
+struct fmtoy;
+struct fmtoy_channel;
+struct fmtoy_chip {
+	const char *name;
+	void *data;
+	int (*init)(struct fmtoy *, int sample_rate, struct fmtoy_channel *);
+	int (*destroy)(struct fmtoy *, struct fmtoy_channel *);
+	void (*program_change)(struct fmtoy *, uint8_t program, struct fmtoy_channel *);
+	void (*pitch_bend)(struct fmtoy *, int pitch, struct fmtoy_channel *);
+	void (*note_on)(struct fmtoy *, uint8_t chip_channel, uint8_t note, uint8_t velocity, struct fmtoy_channel *);
+	void (*note_off)(struct fmtoy *, uint8_t chip_channel, uint8_t note, uint8_t velocity, struct fmtoy_channel *);
+	void (*render)(struct fmtoy *, stream_sample_t **buffers, int num_samples, struct fmtoy_channel *);
+	int clock, max_poliphony;
+
+	struct fmtoy_chip_channel channels[8]; // preallocate channels for poliphony, though we won't always use all of them
+};
+
+struct fmtoy_channel {
+	struct fmtoy_chip *chip;
+	int pitch_bend;
+};
+
 struct fmtoy {
 	stream_sample_t *render_buf_l, *render_buf_r;
 	stream_sample_t *chip_buf_l, *chip_buf_r;
@@ -49,25 +71,9 @@ struct fmtoy {
 	struct fmtoy_opm_voice opm_voices[128];
 	struct fmtoy_opn_voice opn_voices[128];
 
-	// YM2151 OPM
-	void *ym2151;
-	struct fmtoy_chip_channel ym2151_channels[8];
+	struct fmtoy_channel channels[16];
 
-	// YM2203 OPN
-	void *ym2203;
-	struct fmtoy_chip_channel ym2203_channels[3];
-
-	// YM2608 OPNA
-	void *ym2608;
-	struct fmtoy_chip_channel ym2608_channels[6];
-
-	// YM2610 OPNB
-	void *ym2610;
-	struct fmtoy_chip_channel ym2610_channels[4];
-
-	// YM2612 OPN2
-	void *ym2612;
-	struct fmtoy_chip_channel ym2612_channels[6];
+	int pitch_bend_range;
 };
 
 void fmtoy_init(struct fmtoy *fmtoy, int sample_rate);

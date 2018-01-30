@@ -1117,7 +1117,7 @@ void ym2151_write_reg(void *_chip, int r, int v)
 				chip->status &= ~1;
 				timer_set(chip->device->machine, attotime_zero,chip,0,irqAoff_callback);
 #else
-				int oldstate = chip->status & 3;
+				//int oldstate = chip->status & 3;
 				chip->status &= ~1;
 				//if ((oldstate==1) && (chip->irqhandler)) (*chip->irqhandler)(chip->device, 0);
 #endif
@@ -1129,7 +1129,7 @@ void ym2151_write_reg(void *_chip, int r, int v)
 				chip->status &= ~2;
 				timer_set(chip->device->machine, attotime_zero,chip,0,irqBoff_callback);
 #else
-				int oldstate = chip->status & 3;
+				//int oldstate = chip->status & 3;
 				chip->status &= ~2;
 				//if ((oldstate==2) && (chip->irqhandler)) (*chip->irqhandler)(chip->device, 0);
 #endif
@@ -1712,7 +1712,7 @@ INLINE void chan_calc(unsigned int chan)
 
 	if (PSG->Muted[chan])
 		return;
-	
+
 	m2 = c1 = c2 = mem = 0;
 	op = &PSG->oper[chan*4];	/* M1 */
 
@@ -1766,7 +1766,7 @@ INLINE void chan7_calc(void)
 
 	if (PSG->Muted[7])
 		return;
-	
+
 	m2 = c1 = c2 = mem = 0;
 	op = &PSG->oper[7*4];		/* M1 */
 
@@ -2401,7 +2401,7 @@ INLINE signed int acc_calc(signed int value)
 */
 void ym2151_update_one(void *chip, SAMP **buffers, int length)
 {
-	int i, chn;
+	int i/*, chn*/;
 	signed int outl,outr;
 	SAMP *bufL, *bufR;
 
@@ -2421,7 +2421,7 @@ void ym2151_update_one(void *chip, SAMP **buffers, int length)
 			PSG->tim_B_val += PSG->tim_B_tab[ PSG->timer_B_index ];
 			if ( PSG->irq_enable & 0x08 )
 			{
-				int oldstate = PSG->status & 3;
+				//int oldstate = PSG->status & 3;
 				PSG->status |= 2;
 				//if ((!oldstate) && (PSG->irqhandler)) (*PSG->irqhandler)(chip->device, 1);
 			}
@@ -2499,7 +2499,7 @@ void ym2151_update_one(void *chip, SAMP **buffers, int length)
 				PSG->tim_A_val += PSG->tim_A_tab[ PSG->timer_A_index ];
 				if (PSG->irq_enable & 0x04)
 				{
-					int oldstate = PSG->status & 3;
+					//int oldstate = PSG->status & 3;
 					PSG->status |= 1;
 					//if ((!oldstate) && (PSG->irqhandler)) (*PSG->irqhandler)(chip->device, 1);
 				}
@@ -2528,10 +2528,10 @@ void ym2151_set_mutemask(void *chip, UINT32 MuteMask)
 {
 	YM2151 *PSG = (YM2151 *)chip;
 	UINT8 CurChn;
-	
+
 	for (CurChn = 0; CurChn < 8; CurChn ++)
 		PSG->Muted[CurChn] = (MuteMask >> CurChn) & 0x01;
-	
+
 	return;
 }
 

@@ -1,61 +1,50 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include "fmtoy.h"
 #include "tools.h"
 #include "opm_file.h"
 
-#include "chips/2203intf.h"
+#include "fmtoy_ym2151.h"
+#include "fmtoy_ym2203.h"
+#include "fmtoy_ym2608.h"
+#include "fmtoy_ym2610.h"
+#include "fmtoy_ym2610b.h"
+#include "fmtoy_ym2612.h"
 
 static void fmtoy_set_buf_size(struct fmtoy *fmtoy, int size) {
 	if(fmtoy->buf_size < size) {
 		fmtoy->buf_size = size;
-		fmtoy->render_buf_l = realloc(fmtoy->render_buf_l, size);
-		fmtoy->render_buf_r = realloc(fmtoy->render_buf_r, size);
-		fmtoy->chip_buf_l = realloc(fmtoy->chip_buf_l, size);
-		fmtoy->chip_buf_r = realloc(fmtoy->chip_buf_r, size);
+		fmtoy->render_buf_l = realloc(fmtoy->render_buf_l, size * sizeof(*fmtoy->render_buf_l));
+		fmtoy->render_buf_r = realloc(fmtoy->render_buf_r, size * sizeof(*fmtoy->render_buf_r));
+		fmtoy->chip_buf_l = realloc(fmtoy->chip_buf_l, size * sizeof(*fmtoy->chip_buf_l));
+		fmtoy->chip_buf_r = realloc(fmtoy->chip_buf_r, size * sizeof(*fmtoy->chip_buf_r));
 	}
 }
 
-static void fmtoy_ssg_set_clock(void *param, int clock) { (void)param; (void) clock; }
-static void fmtoy_ssg_write(void *param, int address, int data) { (void)param; (void)address; (void)data; }
-static int  fmtoy_ssg_read(void *param) { (void)param; return 0; }
-static void fmtoy_ssg_reset(void *param) { (void)param; }
-ssg_callbacks cb = {
-	set_clock: fmtoy_ssg_set_clock,
-	write: fmtoy_ssg_write,
-	read: fmtoy_ssg_read,
-	reset: fmtoy_ssg_reset
-};
-stream_sample_t DUMMYBUFL[16], DUMMYBUFR[16];
-stream_sample_t* DUMMYBUF[0x02] = {DUMMYBUFL, DUMMYBUFR};
 uint8_t IsVGMInit = 1;
-uint8_t CHIP_SAMPLING_MODE = 0;
-uint8_t CHIP_SAMPLE_RATE = 0;
 
 void fmtoy_init(struct fmtoy *fmtoy, int sample_rate) {
 	fmtoy->sample_rate = sample_rate;
-	CHIP_SAMPLE_RATE = sample_rate;
 
 	fmtoy->render_buf_l = fmtoy->render_buf_r = 0;
 	fmtoy->chip_buf_l = fmtoy->chip_buf_r = 0;
 	fmtoy_set_buf_size(fmtoy, 1024);
 
-	fmtoy->ym2151 = ym2151_init(4000000, sample_rate);
-	ym2151_reset_chip(fmtoy->ym2151);
+	fmtoy->channels[0].chip = &fmtoy_chip_ym2151;
+	fmtoy->channels[1].chip = &fmtoy_chip_ym2203;
+	fmtoy->channels[2].chip = &fmtoy_chip_ym2608;
+	fmtoy->channels[3].chip = &fmtoy_chip_ym2610;
+	fmtoy->channels[4].chip = &fmtoy_chip_ym2610b;
+	fmtoy->channels[5].chip = &fmtoy_chip_ym2612;
 
-	int ayrate;
-	device_start_ym2203(0, 3579545,1, 0, &ayrate);
-	ym2203_set_mute_mask(0, 0, 0);
-	device_reset_ym2203(0);
-
-	fmtoy->ym2608 = ym2608_init(0, 3579545, sample_rate, 0, 0, &cb);
-	ym2608_reset_chip(fmtoy->ym2608);
-	fmtoy->ym2610 = ym2610_init(0, 3579545, sample_rate, 0, 0, &cb);
-	ym2610_reset_chip(fmtoy->ym2610);
-	fmtoy->ym2612 = ym2612_init(0, 3579545, sample_rate, 0, 0);
-	ym2612_reset_chip(fmtoy->ym2612);
+	for(int i = 0; i < 16; i++) {
+		if(fmtoy->channels[i].chip && fmtoy->channels[i].chip->init) {
+			fmtoy->channels[i].chip->init(fmtoy, fmtoy->sample_rate, &fmtoy->channels[i]);
+		}
+	}
 }
 
 void fmtoy_load_voice(struct fmtoy *fmtoy, char *filename) {
@@ -124,7 +113,6 @@ void fmtoy_load_voice(struct fmtoy *fmtoy, char *filename) {
 				fop->d1l_rr = op->d1l << 4 | op->rr;
 			}
 
-			fmtoy->num_voices++;
 
 			// OPN voices
 			struct fmtoy_opn_voice *opnv = &fmtoy->opn_voices[fmtoy->num_voices];
@@ -143,66 +131,27 @@ void fmtoy_load_voice(struct fmtoy *fmtoy, char *filename) {
 				fop->sl_rr = op->d1l << 4 | op->rr;
 				fop->ssg_eg = 0;
 			}
+
+			fmtoy->num_voices++;
 		}
 	}
 }
 
 void fmtoy_program_change(struct fmtoy *fmtoy, uint8_t channel, uint8_t program) {
-	switch(channel) {
-		case 0: {
-			struct fmtoy_opm_voice *v = &fmtoy->opm_voices[program];
-			for(int i = 0; i < 8; i++) {
-				ym2151_write_reg(fmtoy->ym2151, 0x20 + i, v->rl_fb_con);
-				ym2151_write_reg(fmtoy->ym2151, 0x38 + i, v->pms_ams);
-				for(int j = 0; j < 4; j++) {
-					struct fmtoy_opm_voice_operator *op = &v->operators[j];
-					ym2151_write_reg(fmtoy->ym2151, 0x40 + i + j * 8, op->dt1_mul);
-					ym2151_write_reg(fmtoy->ym2151, 0x60 + i + j * 8, op->tl);
-					ym2151_write_reg(fmtoy->ym2151, 0x80 + i + j * 8, op->ks_ar);
-					ym2151_write_reg(fmtoy->ym2151, 0xa0 + i + j * 8, op->ams_en_d1r);
-					ym2151_write_reg(fmtoy->ym2151, 0xc0 + i + j * 8, op->dt2_d2r);
-					ym2151_write_reg(fmtoy->ym2151, 0xe0 + i + j * 8, op->d1l_rr);
-				}
-			}
-		}
-			break;
-		case 1:{
-			struct fmtoy_opn_voice *v = &fmtoy->opn_voices[program];
-			for(int i = 0; i < 3; i++) {
-				ym2203_w(0, 0, 0xb0 + i);
-				ym2203_w(0, 1, v->fb_connect);
-				ym2203_w(0, 0, 0xb4 + i);
-				ym2203_w(0, 1, v->lr_ams_pms);
-				for(int j = 0; j < 4; j++) {
-					struct fmtoy_opn_voice_operator *op = &v->operators[j];
-					ym2203_w(0, 0, 0x30 + i + j * 4);
-					ym2203_w(0, 1, op->dt_multi);
-					ym2203_w(0, 0, 0x40 + i + j * 4);
-					ym2203_w(0, 1, op->tl);
-					ym2203_w(0, 0, 0x50 + i + j * 4);
-					ym2203_w(0, 1, op->ks_ar);
-					ym2203_w(0, 0, 0x60 + i + j * 4);
-					ym2203_w(0, 1, op->am_dr);
-					ym2203_w(0, 0, 0x70 + i + j * 4);
-					ym2203_w(0, 1, op->sr);
-					ym2203_w(0, 0, 0x80 + i + j * 4);
-					ym2203_w(0, 1, op->sl_rr);
-					ym2203_w(0, 0, 0x90 + i + j * 4);
-					ym2203_w(0, 1, op->ssg_eg);
-				}
-			}
-		}
-			break;
-		case 2:
-			break;
-		case 3:
-			break;
-		case 4:
-			break;
+	// change on all channels
+	for(int i = 0; i < 16; i++) {
+		if(fmtoy->channels[i].chip)
+			fmtoy->channels[i].chip->program_change(fmtoy, program, &fmtoy->channels[i]);
 	}
+
+//	if(channel < 16 && fmtoy->channels[channel].chip && fmtoy->channels[channel].chip->program_change) {
+//	}
 }
 
 void fmtoy_pitch_bend(struct fmtoy *fmtoy, uint8_t channel, int bend) {
+	if(channel < 16 && fmtoy->channels[channel].chip && fmtoy->channels[channel].chip->pitch_bend) {
+		fmtoy->channels[channel].chip->pitch_bend(fmtoy, bend, &fmtoy->channels[channel]);
+	}
 }
 
 void fmtoy_cc(struct fmtoy *fmtoy, uint8_t channel, int cc, int value) {
@@ -243,90 +192,27 @@ static uint32_t frame_time() {
 	return t++;
 }
 
+static float midi_note_freq(uint8_t note) {
+	return (440.0 / 32.0) * (pow(2, ((note - 9) / 12.0)));
+}
+
 void fmtoy_note_on(struct fmtoy *fmtoy, uint8_t channel, uint8_t note, uint8_t velocity) {
-	switch(channel) {
-		case 0: {
-			int chip_channel = find_unused_channel(fmtoy->ym2151_channels, sizeof(fmtoy->ym2151_channels) / sizeof(fmtoy->ym2151_channels[0]));
-			uint8_t opm_notes[12] = { 0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14 };
-			ym2151_write_reg(fmtoy->ym2151, 0x28 + chip_channel, (note / 12 - 2) << 4 | opm_notes[note % 12]);
-			ym2151_write_reg(fmtoy->ym2151, 0x30 + chip_channel, 0x05);
-			ym2151_write_reg(fmtoy->ym2151, 0x08, 0x78 + chip_channel);
-			fmtoy->ym2151_channels[chip_channel].frames = frame_time();
-			fmtoy->ym2151_channels[chip_channel].on = 1;
-			fmtoy->ym2151_channels[chip_channel].note = note;
-		}
-			break;
-		case 1: {
-			int chip_channel = find_unused_channel(fmtoy->ym2203_channels, sizeof(fmtoy->ym2203_channels) / sizeof(fmtoy->ym2203_channels[0]));
-			uint16_t opn_notes[12] = { 617, 653, 692, 733, 777, 823, 872, 924, 979, 1037, 1099, 1164 };
-
-			if(fmtoy->ym2203_channels[chip_channel].on) {
-				// send a key off
-				ym2203_w(0, 0, 0x28);
-				ym2203_w(0, 1, chip_channel);
-			}
-
-			uint8_t octave = note / 12;
-			uint16_t semitones = opn_notes[note % 12];
-			ym2203_w(0, 0, 0xa4 + chip_channel);
-			ym2203_w(0, 1, octave << 3 | 0);
-			ym2203_w(0, 0, 0xa0 + chip_channel);
-			ym2203_w(0, 1, semitones >> 3);
-
-			// ym2203_w(0, 0, 0xa4 + chip_channel);
-			// ym2203_w(0, 1, 0x2a);
-			// ym2203_w(0, 0, 0xa0 + chip_channel);
-			// ym2203_w(0, 1, 0x69);
-			ym2203_w(0, 0, 0x28);
-			ym2203_w(0, 1, 0xf0 + chip_channel);
-			fmtoy->ym2203_channels[chip_channel].frames = frame_time();
-			fmtoy->ym2203_channels[chip_channel].on = 1;
-			fmtoy->ym2203_channels[chip_channel].note = note;
-		}
-			break;
+	if(channel < 16 && fmtoy->channels[channel].chip && fmtoy->channels[channel].chip->note_on) {
+		int chip_channel = find_unused_channel(fmtoy->channels[channel].chip->channels, fmtoy->channels[channel].chip->max_poliphony);
+		fmtoy->channels[channel].chip->note_on(fmtoy, chip_channel, note, velocity, &fmtoy->channels[channel]);
+		fmtoy->channels[channel].chip->channels[chip_channel].frames = frame_time();
+		fmtoy->channels[channel].chip->channels[chip_channel].on = 1;
+		fmtoy->channels[channel].chip->channels[chip_channel].note = note;
 	}
-
 }
 
 void fmtoy_note_off(struct fmtoy *fmtoy, uint8_t channel, uint8_t note, uint8_t velocity) {
-	int chip_channel;
-	switch(channel) {
-		case 0:
-			chip_channel = find_used_channel(fmtoy->ym2151_channels, sizeof(fmtoy->ym2151_channels) / sizeof(fmtoy->ym2151_channels[0]), note);
-			if(chip_channel >= 0) {
-				ym2151_write_reg(fmtoy->ym2151, 0x08, chip_channel & 0x07);
-				fmtoy->ym2151_channels[chip_channel].on = 0;
-			}
-			break;
-		case 1:
-			chip_channel = find_used_channel(fmtoy->ym2203_channels, sizeof(fmtoy->ym2203_channels) / sizeof(fmtoy->ym2203_channels[0]), note);
-			if(chip_channel >= 0) {
-				ym2203_w(0, 0, 0x28);
-				ym2203_w(0, 1, chip_channel);
-				fmtoy->ym2203_channels[chip_channel].on = 0;
-			}
-			break;
-		case 2:
-			chip_channel = find_used_channel(fmtoy->ym2608_channels, sizeof(fmtoy->ym2608_channels) / sizeof(fmtoy->ym2608_channels[0]), note);
-			if(chip_channel >= 0) {
-				ym2608_write(fmtoy->ym2608, 0x28, chip_channel < 3 ? chip_channel : chip_channel + 1);
-				fmtoy->ym2608_channels[chip_channel].on = 0;
-			}
-			break;
-		case 3:
-			chip_channel = find_used_channel(fmtoy->ym2610_channels, sizeof(fmtoy->ym2610_channels) / sizeof(fmtoy->ym2610_channels[0]), note);
-			if(chip_channel >= 0) {
-				ym2610_write(fmtoy->ym2610, 0x28, chip_channel);
-				fmtoy->ym2610_channels[chip_channel].on = 0;
-			}
-			break;
-		case 4:
-			chip_channel = find_used_channel(fmtoy->ym2612_channels, sizeof(fmtoy->ym2612_channels) / sizeof(fmtoy->ym2612_channels[0]), note);
-			if(chip_channel >= 0) {
-				ym2612_write(fmtoy->ym2612, 0x28, chip_channel < 3 ? chip_channel : chip_channel + 1);
-				fmtoy->ym2612_channels[chip_channel].on = 0;
-			}
-			break;
+	if(channel < 16 && fmtoy->channels[channel].chip && fmtoy->channels[channel].chip->note_on) {
+		int chip_channel = find_used_channel(fmtoy->channels[channel].chip->channels, fmtoy->channels[channel].chip->max_poliphony, note);
+		if(chip_channel >= 0) {
+			fmtoy->channels[channel].chip->note_off(fmtoy, chip_channel, note, velocity, &fmtoy->channels[channel]);
+			fmtoy->channels[channel].chip->channels[chip_channel].on = 0;
+		}
 	}
 }
 
@@ -344,14 +230,10 @@ void fmtoy_render(struct fmtoy *fmtoy, int samples) {
 		ACCUMULATE(fmtoy->render_buf_r[i], fmtoy->chip_buf_r[i]); \
 	}
 
-	ym2151_update_one(fmtoy->ym2151, chipBufs, samples);
-	MIX_CHIP
-	ym2203_stream_update(0, chipBufs, samples);
-	MIX_CHIP
-	ym2608_update_one(fmtoy->ym2608, chipBufs, samples);
-	MIX_CHIP
-	ym2610_update_one(fmtoy->ym2610, chipBufs, samples);
-	MIX_CHIP
-	ym2612_update_one(fmtoy->ym2612, chipBufs, samples);
-	MIX_CHIP
+	for(int i = 0; i < 16; i++) {
+		if(fmtoy->channels[i].chip && fmtoy->channels[i].chip->render) {
+			fmtoy->channels[i].chip->render(fmtoy, chipBufs, samples, &fmtoy->channels[i]);
+			MIX_CHIP
+		}
+	}
 }

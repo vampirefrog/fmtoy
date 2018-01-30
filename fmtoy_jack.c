@@ -218,8 +218,6 @@ void init_seq() {
 	}
 }
 
-
-
 void do_polling(void) {
 	int npfd = snd_seq_poll_descriptors_count(seq_handle, POLLIN);
 	struct pollfd *pfd = (struct pollfd *)alloca(npfd * sizeof(struct pollfd));

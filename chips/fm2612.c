@@ -697,7 +697,7 @@ typedef struct
 	UINT8		dac_test;
 	INT32		dacout;
 	UINT8		MuteDAC;
-	
+
 	UINT8		WaveOutMode;
 	INT32		WaveL;
 	INT32		WaveR;
@@ -1789,8 +1789,8 @@ static void OPNWriteMode(FM_OPN *OPN, int r, int v)
 			OPN->lfo_timer_overflow = 0;
 			OPN->lfo_timer = 0;
 			OPN->lfo_cnt = 0;
-			
-			
+
+
 			OPN->LFO_PM = 0;
 			OPN->LFO_AM = 126;
 			//OPN->lfo_timer_overflow = 0;
@@ -2248,8 +2248,8 @@ void ym2612_update_one(void *chip, FMSAMPLE **buffer, int length)
 	int lt,rt;
 
 	/* set bufer */
-	bufL = buffer[0];
-	bufR = buffer[1];
+	bufL = buffer ? buffer[0] : 0;
+	bufR = buffer ? buffer[1] : 0;
 
 	cch[0]   = &F2612->CH[0];
 	cch[1]   = &F2612->CH[1];
@@ -2257,7 +2257,7 @@ void ym2612_update_one(void *chip, FMSAMPLE **buffer, int length)
 	cch[3]   = &F2612->CH[3];
 	cch[4]   = &F2612->CH[4];
 	cch[5]   = &F2612->CH[5];
-	
+
 	if (! F2612->MuteDAC)
 		dacout = F2612->dacout;
 	else
@@ -2353,7 +2353,7 @@ void ym2612_update_one(void *chip, FMSAMPLE **buffer, int length)
 			fprintf(hFile, "\t%d", out_fm[lt]);
 		fprintf(hFile, "\n");
 		FileSample ++;*/
-		
+
 		if (out_fm[0] > 8192) out_fm[0] = 8192;
 		else if (out_fm[0] < -8192) out_fm[0] = -8192;
 		if (out_fm[1] > 8192) out_fm[1] = 8192;
@@ -2512,7 +2512,7 @@ void * ym2612_init(void *param, int clock, int rate,
 	/* Extend handler */
 	F2612->OPN.ST.timer_handler = timer_handler;
 	F2612->OPN.ST.IRQ_Handler   = IRQHandler;
-	
+
 	if (PseudoSt)
 		F2612->WaveOutMode = 0x01;
 	else
@@ -2569,9 +2569,9 @@ void ym2612_reset_chip(void *chip)
 	OPN->ST.mode = 0;
 
 	memset(F2612->REGS, 0x00, sizeof(UINT8) * 512);
-	
+
 	OPNWriteMode(OPN,0x22,0x00);
-	
+
 	OPNWriteMode(OPN,0x27,0x30);
 	OPNWriteMode(OPN,0x26,0x00);
 	OPNWriteMode(OPN,0x25,0x00);
@@ -2594,7 +2594,7 @@ void ym2612_reset_chip(void *chip)
 	F2612->dacen = 0;
 	F2612->dac_test = 0;
 	F2612->dacout = 0;
-	
+
 	if (F2612->WaveOutMode == 0x02)
 		F2612->WaveOutMode >>= 1;
 }
@@ -2629,7 +2629,7 @@ int ym2612_write(void *chip, int a, UINT8 v)
 			switch( addr )
 			{
 			case 0x2a:	/* DAC data (YM2612) */
-				ym2612_update_req(F2612->OPN.ST.param);
+        ym2612_update_one(chip, 0, 0);
 				F2612->dacout = ((int)v - 0x80) << 6;	/* level unknown */
 				break;
 			case 0x2b:	/* DAC Sel  (YM2612) */
@@ -2641,13 +2641,13 @@ int ym2612_write(void *chip, int a, UINT8 v)
 				F2612->dac_test = v & 0x20;
 				break;
 			default:	/* OPN section */
-				ym2612_update_req(F2612->OPN.ST.param);
+				ym2612_update_one(chip, 0, 0);
 				/* write register */
 				OPNWriteMode(&(F2612->OPN),addr,v);
 			}
 			break;
 		default:	/* 0x30-0xff OPN section */
-			ym2612_update_req(F2612->OPN.ST.param);
+			ym2612_update_one(chip, 0, 0);
 			/* write register */
 			OPNWriteReg(&(F2612->OPN),addr,v);
 		}
@@ -2664,7 +2664,7 @@ int ym2612_write(void *chip, int a, UINT8 v)
 
 		addr = F2612->OPN.ST.address;
 		F2612->REGS[addr | 0x100] = v;
-		ym2612_update_req(F2612->OPN.ST.param);
+		ym2612_update_one(chip, 0, 0);
 		OPNWriteReg(&(F2612->OPN),addr | 0x100,v);
 		break;
 	}
@@ -2698,7 +2698,7 @@ int ym2612_timer_over(void *chip,int c)
 	}
 	else
 	{	/* Timer A */
-		ym2612_update_req(F2612->OPN.ST.param);
+		ym2612_update_one(chip, 0, 0);
 		/* timer update */
 		TimerAOver( &(F2612->OPN.ST) );
 		/* CSM mode key,TL controll */
@@ -2715,18 +2715,18 @@ void ym2612_set_mutemask(void *chip, UINT32 MuteMask)
 {
 	YM2612 *F2612 = (YM2612 *)chip;
 	UINT8 CurChn;
-	
+
 	for (CurChn = 0; CurChn < 6; CurChn ++)
 		F2612->CH[CurChn].Muted = (MuteMask >> CurChn) & 0x01;
 	F2612->MuteDAC = (MuteMask >> 6) & 0x01;
-	
+
 	return;
 }
 
 void ym2612_setoptions(UINT8 Flags)
 {
 	PseudoSt = (Flags >> 2) & 0x01;
-	
+
 	return;
 }
 #endif /* (BUILD_YM2612||BUILD_YM3238) */

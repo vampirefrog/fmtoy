@@ -53,54 +53,7 @@ struct _ssg_callbacks
 #define MULTIPLY_TIME_BY_INT(t,i)	attotime_mul(t, i)
 #endif
 
-#if BUILD_YM2203
-  /* in 2203intf.c */
-  void ym2203_update_request(void *param);
-  #define ym2203_update_req(chip) ym2203_update_request(chip)
-#endif /* BUILD_YM2203 */
-
-#if BUILD_YM2608
-  /* in 2608intf.c */
-  void ym2608_update_request(void *param);
-  #define ym2608_update_req(chip) ym2608_update_request(chip);
-#endif /* BUILD_YM2608 */
-
-#if (BUILD_YM2610||BUILD_YM2610B)
-  /* in 2610intf.c */
-  void ym2610_update_request(void *param);
-  #define ym2610_update_req(chip) ym2610_update_request(chip);
-#endif /* (BUILD_YM2610||BUILD_YM2610B) */
-
-#if (BUILD_YM2612||BUILD_YM3438)
-  /* in 2612intf.c */
-  void ym2612_update_request(void *param);
-  #define ym2612_update_req(chip) ym2612_update_request(chip);
-#endif /* (BUILD_YM2612||BUILD_YM3438) */
-
-/* compiler dependence */
-#if 0
-#ifndef OSD_CPU_H
-#define OSD_CPU_H
-typedef unsigned char	UINT8;   /* unsigned  8bit */
-typedef unsigned short	UINT16;  /* unsigned 16bit */
-typedef unsigned int	UINT32;  /* unsigned 32bit */
-typedef signed char		INT8;    /* signed  8bit   */
-typedef signed short	INT16;   /* signed 16bit   */
-typedef signed int		INT32;   /* signed 32bit   */
-#endif /* OSD_CPU_H */
-#endif
-
-
-
 typedef stream_sample_t FMSAMPLE;
-/*
-#if (FM_SAMPLE_BITS==16)
-typedef INT16 FMSAMPLE;
-#endif
-#if (FM_SAMPLE_BITS==8)
-typedef unsigned char  FMSAMPLE;
-#endif
-*/
 
 typedef void (*FM_TIMERHANDLER)(void *param,int c,int cnt,int clock);
 typedef void (*FM_IRQHANDLER)(void *param,int irq);
@@ -127,8 +80,6 @@ typedef void (*FM_IRQHANDLER)(void *param,int irq);
 ** 'IRQHandler'    IRQ callback handler when changed IRQ level
 ** return      0 = success
 */
-//void * ym2203_init(void *param, const device_config *device, int baseclock, int rate,
-//               FM_TIMERHANDLER TimerHandler,FM_IRQHANDLER IRQHandler, const ssg_callbacks *ssg);
 void * ym2203_init(void *param, int baseclock, int rate,
                FM_TIMERHANDLER TimerHandler,FM_IRQHANDLER IRQHandler, const ssg_callbacks *ssg);
 
