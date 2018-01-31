@@ -719,7 +719,6 @@ typedef struct
 	else if ( val < min ) val = min; \
 }
 
-extern UINT8 IsVGMInit;
 static UINT8 PseudoSt = 0x00;
 /*#include <stdio.h>
 static FILE* hFile;
@@ -797,20 +796,14 @@ INLINE void FM_KEYON(FM_OPN *OPN, FM_CH *CH , int s )
 
 	SLOT->key = 1;
 }
-
+#include <stdio.h>
 INLINE void FM_KEYOFF(FM_OPN *OPN, FM_CH *CH , int s )
 {
-	FM_SLOT *SLOT = &CH->SLOT[s];
+  FM_SLOT *SLOT = &CH->SLOT[s];
 
 	if (SLOT->key && (!OPN->SL3.key_csm || CH == &OPN->P_CH[3]))
 	{
-		if (IsVGMInit)	// workaround for VGMs trimmed with VGMTool
-		{
-			SLOT->state = EG_OFF;
-			SLOT->volume = MAX_ATT_INDEX;
-			SLOT->vol_out= MAX_ATT_INDEX;
-		}
-		else if (SLOT->state>EG_REL)
+    if (SLOT->state>EG_REL)
 		{
 			SLOT->state = EG_REL; /* phase -> Release */
 
@@ -875,13 +868,7 @@ INLINE void FM_KEYOFF_CSM(FM_CH *CH , int s )
 	FM_SLOT *SLOT = &CH->SLOT[s];
 	if (!SLOT->key)
 	{
-		if (IsVGMInit)
-		{
-			SLOT->state = EG_OFF;
-			SLOT->volume = MAX_ATT_INDEX;
-			SLOT->vol_out= MAX_ATT_INDEX;
-		}
-		else if (SLOT->state>EG_REL)
+    if (SLOT->state>EG_REL)
 		{
 			SLOT->state = EG_REL; /* phase -> Release */
 
@@ -1962,8 +1949,6 @@ static void OPNWriteReg(FM_OPN *OPN, int r, int v)
 		switch( OPN_SLOT(r) )
 		{
 		case 0:		/* 0xa0-0xa2 : FNUM1 */
-			if (IsVGMInit)
-				OPN->ST.fn_h = CH->block_fnum >> 8;
 			{
 				UINT32 fn = (((UINT32)( (OPN->ST.fn_h)&7))<<8) + v;
 				UINT8 blk = OPN->ST.fn_h>>3;
@@ -1980,12 +1965,8 @@ static void OPNWriteReg(FM_OPN *OPN, int r, int v)
 			break;
 		case 1:		/* 0xa4-0xa6 : FNUM2,BLK */
 			OPN->ST.fn_h = v&0x3f;
-			if (IsVGMInit)	// workaround for stupid Kega Fusion init block
-				CH->block_fnum = (OPN->ST.fn_h << 8) | (CH->block_fnum & 0xFF);
 			break;
 		case 2:		/* 0xa8-0xaa : 3CH FNUM1 */
-			if (IsVGMInit)
-				OPN->SL3.fn_h = OPN->SL3.block_fnum[c] >> 8;
 			if(r < 0x100)
 			{
 				UINT32 fn = (((UINT32)(OPN->SL3.fn_h&7))<<8) + v;
@@ -2002,8 +1983,6 @@ static void OPNWriteReg(FM_OPN *OPN, int r, int v)
 			if(r < 0x100)
 			{
 				OPN->SL3.fn_h = v&0x3f;
-				if (IsVGMInit)
-					OPN->SL3.block_fnum[c] = (OPN->SL3.fn_h << 8) | (OPN->SL3.block_fnum[c] & 0xFF);
 			}
 			break;
 		}
@@ -2348,12 +2327,6 @@ void ym2612_update_one(void *chip, FMSAMPLE **buffer, int length)
 			advance_eg_channel(OPN, &cch[5]->SLOT[SLOT1]);
 		}
 
-		/*fprintf(hFile, "%u", FileSample, out_fm[0]);
-		for (lt = 0; lt < 6; lt ++)
-			fprintf(hFile, "\t%d", out_fm[lt]);
-		fprintf(hFile, "\n");
-		FileSample ++;*/
-
 		if (out_fm[0] > 8192) out_fm[0] = 8192;
 		else if (out_fm[0] < -8192) out_fm[0] = -8192;
 		if (out_fm[1] > 8192) out_fm[1] = 8192;
@@ -2517,10 +2490,6 @@ void * ym2612_init(void *param, int clock, int rate,
 		F2612->WaveOutMode = 0x01;
 	else
 		F2612->WaveOutMode = 0x03;
-	/*hFile = fopen("YM2612.log", "wt");
-	fprintf(hFile, "Clock: %d, Sample Rate: %d\n", clock, rate);
-	fprintf(hFile, "Sample\tCh 0\tCh 1\tCh 2\tCh 3\tCh 4\tCh 5\n");
-	FileSample = 0;*/
 
 #ifdef __STATE_H__
 	YM2612_save_state(F2612, device);

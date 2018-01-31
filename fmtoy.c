@@ -24,8 +24,6 @@ static void fmtoy_set_buf_size(struct fmtoy *fmtoy, int size) {
 	}
 }
 
-uint8_t IsVGMInit = 1;
-
 void fmtoy_init(struct fmtoy *fmtoy, int sample_rate) {
 	fmtoy->sample_rate = sample_rate;
 
