@@ -3956,7 +3956,7 @@ void ym2610_update_one(void *chip, FMSAMPLE **buffer, int length)
 #ifdef YM2610B_WARNING
 #define FM_KEY_IS(SLOT) ((SLOT)->key)
 #define FM_MSG_YM2610B "YM2610-%p.CH%d is playing,Check whether the type of the chip is YM2610B\n"
-	if(bufL) {
+	if(length > 0) {
 		/* Check YM2610B warning message */
 		if( FM_KEY_IS(&F2610->CH[0].SLOT[3]) )
 		{
