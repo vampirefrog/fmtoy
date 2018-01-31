@@ -17,9 +17,9 @@ struct fmtoy_opm_voice {
 	uint8_t lfrq, pmd_amd, w, ne_nfrq;
 	// per channel registers
 	uint8_t rl_fb_con, pms_ams;
-	// slot mask
+	// slot mask, bits are in mask order: 0 2 1 3 - M1 C1 M2 C2
 	uint8_t sm;
-	// operators, in chip order M1 M2 C1 C2
+	// operators, in chip order: 0 1 2 3 - M1 M2 C1 C2
 	struct fmtoy_opm_voice_operator operators[4];
 };
 
@@ -29,7 +29,13 @@ struct fmtoy_opn_voice_operator {
 
 struct fmtoy_opn_voice {
 	char name[256];
-	uint8_t lfo, fb_connect, lr_ams_pms;
+	// per chip registers
+	uint8_t lfo;
+	// per channel registers
+	uint8_t fb_connect, lr_ams_pms;
+	// slot mask, in mask order: 0 2 1 3 - M1 C1 M2 C2
+	uint8_t sm;
+	// operators, in chip order: 0 1 2 3 - M1 M2 C1 C2
 	struct fmtoy_opn_voice_operator operators[4];
 };
 
