@@ -28,12 +28,6 @@ ALL_STATES
 #undef STATE
 	} state;
 
-	const char *state_names[] = {
-#define STATE(x) #x,
-ALL_STATES
-#undef STATE
-	};
-
 #define CHAR_DOT(x) ((x) < 0x20 || (x) >= 0x7f ? '.' : (x))
 
 #define MAX_PARAM_NAME 4
