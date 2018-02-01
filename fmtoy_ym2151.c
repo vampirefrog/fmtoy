@@ -1,8 +1,10 @@
+#include <math.h>
 #include "fmtoy.h"
 #include "fmtoy_ym2151.h"
 
 static int fmtoy_ym2151_init(struct fmtoy *fmtoy, int sample_rate, struct fmtoy_channel *channel) {
-	channel->chip->data = ym2151_init(3579545, sample_rate);
+	channel->chip->clock = 3579545;
+	channel->chip->data = ym2151_init(channel->chip->clock, sample_rate);
 	ym2151_reset_chip(channel->chip->data);
 	return 0;
 }
@@ -28,22 +30,27 @@ static void fmtoy_ym2151_program_change(struct fmtoy *fmtoy, uint8_t program, st
 	}
 }
 
-static void fmtoy_ym2151_pitch_bend(struct fmtoy *fmtoy, int pitch, struct fmtoy_channel *channel) {
-}
-
-static void fmtoy_ym2151_set_pitch(struct fmtoy *fmtoy, uint8_t chip_channel, uint8_t note, uint8_t bend, struct fmtoy_channel *channel) {
+#include <stdio.h>
+static void fmtoy_ym2151_set_pitch(struct fmtoy *fmtoy, uint8_t chip_channel, float pitch, struct fmtoy_channel *channel) {
+	float kf = 3584 + 64 * 12 * log2(pitch * 3579545.0 / channel->chip->clock / 440.0);
+	int octave = (int)kf / 64 / 12;
+	int k = ((int)kf / 64) % 12;
 	const uint8_t opm_notes[12] = { 0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14 };
-	ym2151_write_reg(channel->chip->data, 0x28 + chip_channel, (note / 12) << 4 | opm_notes[note % 12]);
-	ym2151_write_reg(channel->chip->data, 0x30 + chip_channel, 0x00);
+	ym2151_write_reg(channel->chip->data, 0x28 + chip_channel, octave << 4 | opm_notes[k]);
+	ym2151_write_reg(channel->chip->data, 0x30 + chip_channel, (int)kf % 64 << 2);
 }
 
-static void fmtoy_ym2151_note_on(struct fmtoy *fmtoy, uint8_t chip_channel, uint8_t note, uint8_t velocity, struct fmtoy_channel *channel) {
-	fmtoy_ym2151_set_pitch(fmtoy, chip_channel, note - 1, channel->pitch_bend, channel);
+static void fmtoy_ym2151_note_on(struct fmtoy *fmtoy, uint8_t chip_channel, float pitch, uint8_t velocity, struct fmtoy_channel *channel) {
+	fmtoy_ym2151_set_pitch(fmtoy, chip_channel, pitch, channel);
 	ym2151_write_reg(channel->chip->data, 0x08, 0x78 + chip_channel);
 }
 
-static void fmtoy_ym2151_note_off(struct fmtoy *fmtoy, uint8_t chip_channel, uint8_t note, uint8_t velocity, struct fmtoy_channel *channel) {
+static void fmtoy_ym2151_note_off(struct fmtoy *fmtoy, uint8_t chip_channel, uint8_t velocity, struct fmtoy_channel *channel) {
 	ym2151_write_reg(channel->chip->data, 0x08, chip_channel & 0x07);
+}
+
+static void fmtoy_ym2151_pitch_bend(struct fmtoy *fmtoy, uint8_t chip_channel, float pitch, struct fmtoy_channel *channel) {
+	fmtoy_ym2151_set_pitch(fmtoy, chip_channel, pitch, channel);
 }
 
 static void fmtoy_ym2151_render(struct fmtoy *fmtoy, stream_sample_t **buffers, int num_samples, struct fmtoy_channel *channel) {

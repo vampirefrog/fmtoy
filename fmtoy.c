@@ -6,6 +6,7 @@
 #include "fmtoy.h"
 #include "tools.h"
 #include "opm_file.h"
+#include "midi.h"
 
 #include "fmtoy_ym2151.h"
 #include "fmtoy_ym2203.h"
@@ -26,6 +27,8 @@ static void fmtoy_set_buf_size(struct fmtoy *fmtoy, int size) {
 
 void fmtoy_init(struct fmtoy *fmtoy, int sample_rate) {
 	fmtoy->sample_rate = sample_rate;
+
+	fmtoy->pitch_bend_range = 2;
 
 	fmtoy->render_buf_l = fmtoy->render_buf_r = 0;
 	fmtoy->chip_buf_l = fmtoy->chip_buf_r = 0;
@@ -146,12 +149,6 @@ void fmtoy_program_change(struct fmtoy *fmtoy, uint8_t channel, uint8_t program)
 //	}
 }
 
-void fmtoy_pitch_bend(struct fmtoy *fmtoy, uint8_t channel, int bend) {
-	if(channel < 16 && fmtoy->channels[channel].chip && fmtoy->channels[channel].chip->pitch_bend) {
-		fmtoy->channels[channel].chip->pitch_bend(fmtoy, bend, &fmtoy->channels[channel]);
-	}
-}
-
 void fmtoy_cc(struct fmtoy *fmtoy, uint8_t channel, int cc, int value) {
 }
 
@@ -190,14 +187,15 @@ static uint32_t frame_time() {
 	return t++;
 }
 
-static float midi_note_freq(uint8_t note) {
-	return (440.0 / 32.0) * (pow(2, ((note - 9) / 12.0)));
+static float float_note_freq(float note) {
+	return (440.0 / 32.0) * (pow(2.0, ((note - 9.0) / 12.0)));
 }
 
 void fmtoy_note_on(struct fmtoy *fmtoy, uint8_t channel, uint8_t note, uint8_t velocity) {
 	if(channel < 16 && fmtoy->channels[channel].chip && fmtoy->channels[channel].chip->note_on) {
 		int chip_channel = find_unused_channel(fmtoy->channels[channel].chip->channels, fmtoy->channels[channel].chip->max_poliphony);
-		fmtoy->channels[channel].chip->note_on(fmtoy, chip_channel, note, velocity, &fmtoy->channels[channel]);
+		float pitch = float_note_freq((float)note + (float)fmtoy->channels[channel].pitch_bend * (float)fmtoy->pitch_bend_range / 8191.0);
+		fmtoy->channels[channel].chip->note_on(fmtoy, chip_channel, pitch, velocity, &fmtoy->channels[channel]);
 		fmtoy->channels[channel].chip->channels[chip_channel].frames = frame_time();
 		fmtoy->channels[channel].chip->channels[chip_channel].on = 1;
 		fmtoy->channels[channel].chip->channels[chip_channel].note = note;
@@ -208,8 +206,19 @@ void fmtoy_note_off(struct fmtoy *fmtoy, uint8_t channel, uint8_t note, uint8_t 
 	if(channel < 16 && fmtoy->channels[channel].chip && fmtoy->channels[channel].chip->note_on) {
 		int chip_channel = find_used_channel(fmtoy->channels[channel].chip->channels, fmtoy->channels[channel].chip->max_poliphony, note);
 		if(chip_channel >= 0) {
-			fmtoy->channels[channel].chip->note_off(fmtoy, chip_channel, note, velocity, &fmtoy->channels[channel]);
+			fmtoy->channels[channel].chip->note_off(fmtoy, chip_channel, velocity, &fmtoy->channels[channel]);
 			fmtoy->channels[channel].chip->channels[chip_channel].on = 0;
+		}
+	}
+}
+
+void fmtoy_pitch_bend(struct fmtoy *fmtoy, uint8_t channel, int bend) {
+	fmtoy->channels[channel].pitch_bend = bend;
+	if(channel < 16 && fmtoy->channels[channel].chip && fmtoy->channels[channel].chip->note_on) {
+		for(int i = 0; i < fmtoy->channels[channel].chip->max_poliphony; i++) {
+			if(!fmtoy->channels[channel].chip->channels[i].on) continue;
+			float pitch = float_note_freq((float)fmtoy->channels[channel].chip->channels[i].note + (float)fmtoy->channels[channel].pitch_bend * (float)fmtoy->pitch_bend_range / 8191.0);
+			fmtoy->channels[channel].chip->pitch_bend(fmtoy, i, pitch, &fmtoy->channels[channel]);
 		}
 	}
 }

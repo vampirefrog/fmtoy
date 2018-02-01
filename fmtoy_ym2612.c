@@ -4,16 +4,11 @@
 #include "fmtoy_ym2612.h"
 #include "chips/fm.h"
 
-static float midi_note_freq(uint8_t note) {
-	return (440.0 / 32.0) * (pow(2, ((note - 9) / 12.0)));
-}
-
-static void fmtoy_ym2612_set_pitch(struct fmtoy *fmtoy, int chip_channel, int note, int bend, struct fmtoy_channel *channel) {
+static void fmtoy_ym2612_set_pitch(struct fmtoy *fmtoy, int chip_channel, float pitch, struct fmtoy_channel *channel) {
+	uint8_t octave = (69 + 12 * log2(pitch / 440.0)) / 12;
+	uint16_t fnum = (144 * pitch * (1 << 20) / channel->chip->clock) / (1 << (octave - 1));
 	int base = chip_channel < 3 ? 0 : 2;
 	chip_channel = chip_channel % 3;
-	uint8_t octave = note / 12;
-	float m = midi_note_freq(note);
-	uint16_t fnum = (144 * m * (1 << 21) / channel->chip->clock) / (1 << (octave - 1));
 	ym2612_write(channel->chip->data, base+0, 0xa4 + chip_channel);
 	ym2612_write(channel->chip->data, base+1, octave << 3 | (fnum >> 8 & 0x07));
 	ym2612_write(channel->chip->data, base+0, 0xa0 + chip_channel);
@@ -65,11 +60,12 @@ static void fmtoy_ym2612_program_change(struct fmtoy *fmtoy, uint8_t program, st
 	}
 }
 
-static void fmtoy_ym2612_pitch_bend(struct fmtoy *fmtoy, int pitch, struct fmtoy_channel *channel) {
+static void fmtoy_ym2612_pitch_bend(struct fmtoy *fmtoy, uint8_t chip_channel, float pitch, struct fmtoy_channel *channel) {
+	fmtoy_ym2612_set_pitch(fmtoy, chip_channel, pitch, channel);
 }
 
-static void fmtoy_ym2612_note_on(struct fmtoy *fmtoy, uint8_t chip_channel, uint8_t note, uint8_t velocity, struct fmtoy_channel *channel) {
-	fmtoy_ym2612_set_pitch(fmtoy, chip_channel, note, 0, channel);
+static void fmtoy_ym2612_note_on(struct fmtoy *fmtoy, uint8_t chip_channel, float pitch, uint8_t velocity, struct fmtoy_channel *channel) {
+	fmtoy_ym2612_set_pitch(fmtoy, chip_channel, pitch, channel);
 	chip_channel = chip_channel < 3 ? chip_channel : (chip_channel + 1);
 	// ym2612_write(channel->chip->data, 0, 0x28);
 	// ym2612_write(channel->chip->data, 1, chip_channel);
@@ -77,7 +73,7 @@ static void fmtoy_ym2612_note_on(struct fmtoy *fmtoy, uint8_t chip_channel, uint
 	ym2612_write(channel->chip->data, 1, 0xf0 + chip_channel);
 }
 
-static void fmtoy_ym2612_note_off(struct fmtoy *fmtoy, uint8_t chip_channel, uint8_t note, uint8_t velocity, struct fmtoy_channel *channel) {
+static void fmtoy_ym2612_note_off(struct fmtoy *fmtoy, uint8_t chip_channel, uint8_t velocity, struct fmtoy_channel *channel) {
 	chip_channel = chip_channel < 3 ? chip_channel : chip_channel + 1;
 	ym2612_write(channel->chip->data, 0, 0x28);
 	ym2612_write(channel->chip->data, 1, chip_channel);

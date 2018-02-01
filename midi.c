@@ -1,4 +1,5 @@
 #include <asoundlib.h>
+#include <math.h>
 #include "midi.h"
 
 static char *midi_note_names[12] = {
@@ -10,7 +11,7 @@ const char *midi_note_name(int note) {
 }
 
 int midi_note_octave(int note) {
-	return note / 12;
+	return note / 12 - 1;
 }
 
 const char *midi_cc_name(int cc) {
@@ -90,4 +91,8 @@ const char *midi_cc_name(int cc) {
 	}
 
 	return "Unknown";
+}
+
+float midi_note_freq(uint8_t note) {
+	return (440.0 / 32.0) * (pow(2, ((note - 9) / 12.0)));
 }
