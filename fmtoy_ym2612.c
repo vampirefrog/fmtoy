@@ -13,7 +13,7 @@ static void fmtoy_ym2612_set_pitch(struct fmtoy *fmtoy, int chip_channel, int no
 	chip_channel = chip_channel % 3;
 	uint8_t octave = note / 12;
 	float m = midi_note_freq(note);
-	uint16_t fnum = (144 * m * (1 << 20) / channel->chip->clock) / (1 << (octave - 1));
+	uint16_t fnum = (144 * m * (1 << 21) / channel->chip->clock) / (1 << (octave - 1));
 	ym2612_write(channel->chip->data, base+0, 0xa4 + chip_channel);
 	ym2612_write(channel->chip->data, base+1, octave << 3 | (fnum >> 8 & 0x07));
 	ym2612_write(channel->chip->data, base+0, 0xa0 + chip_channel);
@@ -21,16 +21,13 @@ static void fmtoy_ym2612_set_pitch(struct fmtoy *fmtoy, int chip_channel, int no
 }
 
 static int fmtoy_ym2612_init(struct fmtoy *fmtoy, int sample_rate, struct fmtoy_channel *channel) {
-	channel->chip->clock = 3579545 * 2;
+	channel->chip->clock = 3579545;
 	channel->chip->data = ym2612_init(0, channel->chip->clock, sample_rate, 0, 0);
 	ym2612_reset_chip(channel->chip->data);
 
 	// Enable 6 channel mode
 	ym2612_write(channel->chip->data, 0, 0x29);
 	ym2612_write(channel->chip->data, 1, 0x80);
-
-	// Prescaler divide by 2
-	ym2612_write(channel->chip->data, 0, 0x2e);
 
 	return 0;
 }

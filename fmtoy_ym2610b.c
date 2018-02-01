@@ -13,7 +13,7 @@ static void fmtoy_ym2610b_set_pitch(struct fmtoy *fmtoy, int chip_channel, int n
 	chip_channel = chip_channel % 3;
 	uint8_t octave = note / 12;
 	float m = midi_note_freq(note);
-	uint16_t fnum = (144 * m * (1 << 20) / channel->chip->clock) / (1 << (octave - 1));
+	uint16_t fnum = (144 * m * (1 << 21) / channel->chip->clock) / (1 << (octave - 1));
 	ym2610_write(channel->chip->data, base+0, 0xa4 + chip_channel);
 	ym2610_write(channel->chip->data, base+1, octave << 3 | (fnum >> 8 & 0x07));
 	ym2610_write(channel->chip->data, base+0, 0xa0 + chip_channel);
@@ -21,7 +21,7 @@ static void fmtoy_ym2610b_set_pitch(struct fmtoy *fmtoy, int chip_channel, int n
 }
 
 static int fmtoy_ym2610b_init(struct fmtoy *fmtoy, int sample_rate, struct fmtoy_channel *channel) {
-	channel->chip->clock = 3579545 * 2;
+	channel->chip->clock = 3579545;
 	channel->chip->data = ym2610_init(0, channel->chip->clock, sample_rate, 0, 0, 0);
 	ym2610_reset_chip(channel->chip->data);
 
