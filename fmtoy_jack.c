@@ -5,6 +5,7 @@
 #include "tools.h"
 #include "opm_file.h"
 #include "fmtoy.h"
+#include "midi.h"
 
 typedef jack_default_audio_sample_t sample_t;
 
@@ -42,12 +43,12 @@ void midi_action(snd_seq_t *seq_handle) {
 		switch (ev->type) {
 			case SND_SEQ_EVENT_NOTEON:
 				if(opt_verbose)
-					printf("%s: Note on %s (%d) %d\n", fmtoy_channel_name(&fmtoy, ev->data.control.channel), midi_note_name(ev->data.note.note), ev->data.note.note, ev->data.note.velocity);
+					printf("%s: Note \033[32mON\033[0m  %s%d (%d) %d\n", fmtoy_channel_name(&fmtoy, ev->data.control.channel), midi_note_name(ev->data.note.note), midi_note_octave(ev->data.note.note), ev->data.note.note, ev->data.note.velocity);
 				fmtoy_note_on(&fmtoy, ev->data.note.channel, ev->data.note.note, ev->data.note.velocity);
 				break;
 			case SND_SEQ_EVENT_NOTEOFF:
 				if(opt_verbose)
-					printf("%s: Note off %s (%d) %d\n", fmtoy_channel_name(&fmtoy, ev->data.control.channel), midi_note_name(ev->data.note.note), ev->data.note.note, ev->data.note.velocity);
+					printf("%s: Note \033[31mOFF\033[0m %s%d (%d) %d\n", fmtoy_channel_name(&fmtoy, ev->data.control.channel), midi_note_name(ev->data.note.note), midi_note_octave(ev->data.note.note), ev->data.note.note, ev->data.note.velocity);
 				fmtoy_note_off(&fmtoy, ev->data.note.channel, ev->data.note.note, ev->data.note.velocity);
 				break;
 			case SND_SEQ_EVENT_PITCHBEND:
@@ -55,12 +56,12 @@ void midi_action(snd_seq_t *seq_handle) {
 				break;
 			case SND_SEQ_EVENT_PGMCHANGE:
 				if(opt_verbose)
-					printf("%s: Program %d\n", fmtoy_channel_name(&fmtoy, ev->data.control.channel), ev->data.control.value);
+					printf("\033[33mProgram \033[1m%d\033[0m\n", ev->data.control.value);
 				fmtoy_program_change(&fmtoy, ev->data.control.channel, ev->data.control.value);
 				break;
 			case SND_SEQ_EVENT_CONTROLLER:
-				if(opt_verbose)
-					printf("%s: CC 0x%02x (%s) %d\n", fmtoy_channel_name(&fmtoy, ev->data.control.channel), ev->data.control.param, midi_cc_name(ev->data.control.param), ev->data.control.value);
+				// if(opt_verbose)
+				// 	printf("%s: CC 0x%02x (%s) %d\n", fmtoy_channel_name(&fmtoy, ev->data.control.channel), ev->data.control.param, midi_cc_name(ev->data.control.param), ev->data.control.value);
 				fmtoy_cc(&fmtoy, ev->data.control.channel, ev->data.control.param, ev->data.control.value);
 				break;
 		}
