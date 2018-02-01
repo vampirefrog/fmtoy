@@ -90,5 +90,6 @@ void fmtoy_render(struct fmtoy *fmtoy, int samples);
 void fmtoy_program_change(struct fmtoy *fmtoy, uint8_t channel, uint8_t program);
 void fmtoy_pitch_bend(struct fmtoy *fmtoy, uint8_t channel, int bend);
 void fmtoy_cc(struct fmtoy *fmtoy, uint8_t channel, int cc, int value);
+const char *fmtoy_channel_name(struct fmtoy *fmtoy, uint8_t channel);
 
 #endif /* FMTOY_H_ */

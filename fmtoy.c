@@ -235,3 +235,10 @@ void fmtoy_render(struct fmtoy *fmtoy, int samples) {
 		}
 	}
 }
+
+const char *fmtoy_channel_name(struct fmtoy *fmtoy, uint8_t channel) {
+	if(fmtoy->channels[channel].chip)
+		return fmtoy->channels[channel].chip->name;
+
+	return 0;
+}
