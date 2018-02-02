@@ -2,9 +2,9 @@
 #include "fmtoy.h"
 #include "fmtoy_ym2151.h"
 
-static int fmtoy_ym2151_init(struct fmtoy *fmtoy, int sample_rate, struct fmtoy_channel *channel) {
-	channel->chip->clock = 3579545;
-	channel->chip->data = ym2151_init(channel->chip->clock, sample_rate);
+static int fmtoy_ym2151_init(struct fmtoy *fmtoy, int clock, int sample_rate, struct fmtoy_channel *channel) {
+	channel->chip->clock = clock;
+	channel->chip->data = ym2151_init(clock, sample_rate);
 	ym2151_reset_chip(channel->chip->data);
 	return 0;
 }
@@ -30,7 +30,6 @@ static void fmtoy_ym2151_program_change(struct fmtoy *fmtoy, uint8_t program, st
 	}
 }
 
-#include <stdio.h>
 static void fmtoy_ym2151_set_pitch(struct fmtoy *fmtoy, uint8_t chip_channel, float pitch, struct fmtoy_channel *channel) {
 	float kf = 3584 + 64 * 12 * log2(pitch * 3579545.0 / channel->chip->clock / 440.0);
 	int octave = (int)kf / 64 / 12;

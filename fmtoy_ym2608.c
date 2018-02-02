@@ -4,20 +4,9 @@
 #include "fmtoy_ym2608.h"
 #include "chips/fm.h"
 
-static void fmtoy_ym2608_set_pitch(struct fmtoy *fmtoy, int chip_channel, float pitch, struct fmtoy_channel *channel) {
-	uint8_t octave = (69 + 12 * log2(pitch / 440.0)) / 12;
-	uint16_t fnum = (144 * pitch * (1 << 20) / channel->chip->clock) / (1 << (octave - 1));
-	int base = chip_channel < 3 ? 0 : 2;
-	chip_channel = chip_channel % 3;
-	ym2608_write(channel->chip->data, base+0, 0xa4 + chip_channel);
-	ym2608_write(channel->chip->data, base+1, octave << 3 | (fnum >> 8 & 0x07));
-	ym2608_write(channel->chip->data, base+0, 0xa0 + chip_channel);
-	ym2608_write(channel->chip->data, base+1, fnum & 0xff);
-}
-
-static int fmtoy_ym2608_init(struct fmtoy *fmtoy, int sample_rate, struct fmtoy_channel *channel) {
-	channel->chip->clock = 3579545;
-	channel->chip->data = ym2608_init(0, channel->chip->clock, sample_rate, 0, 0, 0);
+static int fmtoy_ym2608_init(struct fmtoy *fmtoy, int clock, int sample_rate, struct fmtoy_channel *channel) {
+	channel->chip->clock = clock;
+	channel->chip->data = ym2608_init(0, clock, sample_rate, 0, 0, 0);
 	ym2608_reset_chip(channel->chip->data);
 
 	// Enable 6 channel mode
@@ -58,6 +47,17 @@ static void fmtoy_ym2608_program_change(struct fmtoy *fmtoy, uint8_t program, st
 			ym2608_write(channel->chip->data, base+1, op->ssg_eg);
 		}
 	}
+}
+
+static void fmtoy_ym2608_set_pitch(struct fmtoy *fmtoy, int chip_channel, float pitch, struct fmtoy_channel *channel) {
+	uint8_t octave = (69 + 12 * log2(pitch / 440.0)) / 12;
+	uint16_t fnum = (144 * pitch * (1 << 20) / channel->chip->clock) / (1 << (octave - 1));
+	int base = chip_channel < 3 ? 0 : 2;
+	chip_channel = chip_channel % 3;
+	ym2608_write(channel->chip->data, base+0, 0xa4 + chip_channel);
+	ym2608_write(channel->chip->data, base+1, octave << 3 | (fnum >> 8 & 0x07));
+	ym2608_write(channel->chip->data, base+0, 0xa0 + chip_channel);
+	ym2608_write(channel->chip->data, base+1, fnum & 0xff);
 }
 
 static void fmtoy_ym2608_pitch_bend(struct fmtoy *fmtoy, uint8_t chip_channel, float pitch, struct fmtoy_channel *channel) {

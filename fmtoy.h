@@ -50,7 +50,7 @@ struct fmtoy_channel;
 struct fmtoy_chip {
 	const char *name;
 	void *data;
-	int (*init)(struct fmtoy *, int sample_rate, struct fmtoy_channel *);
+	int (*init)(struct fmtoy *, int clock, int sample_rate, struct fmtoy_channel *);
 	int (*destroy)(struct fmtoy *, struct fmtoy_channel *);
 	void (*program_change)(struct fmtoy *, uint8_t program, struct fmtoy_channel *);
 	void (*pitch_bend)(struct fmtoy *, uint8_t chip_channel, float pitch, struct fmtoy_channel *);
@@ -79,10 +79,11 @@ struct fmtoy {
 
 	struct fmtoy_channel channels[16];
 
+	int clock; // chip clock
 	int pitch_bend_range; // in semitones
 };
 
-void fmtoy_init(struct fmtoy *fmtoy, int sample_rate);
+void fmtoy_init(struct fmtoy *fmtoy, int clock, int sample_rate);
 void fmtoy_load_voice(struct fmtoy *fmtoy, char *filename);
 void fmtoy_note_on(struct fmtoy *fmtoy, uint8_t channel, uint8_t note, uint8_t velocity);
 void fmtoy_note_off(struct fmtoy *fmtoy, uint8_t channel, uint8_t note, uint8_t velocity);

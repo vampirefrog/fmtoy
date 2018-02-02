@@ -9,10 +9,11 @@
 
 typedef jack_default_audio_sample_t sample_t;
 
-#define DEFAULT_CLIENT_NAME "FM Toy"
-char *opt_name = DEFAULT_CLIENT_NAME;
+char *opt_name = "FM Toy";
 char *opt_port = 0;
 int opt_verbose = 0;
+#define DEFAULT_CLOCK 3579545
+int opt_clock = DEFAULT_CLOCK;
 
 jack_client_t *client;
 jack_port_t *output_ports[2];
@@ -143,6 +144,7 @@ void do_polling(void) {
 	}
 }
 
+#define STR(s) #s
 int main(int argc, char **argv) {
 	int optind = cmdline_parse_args(argc, argv, (struct cmdline_option[]){
 		{
@@ -166,6 +168,13 @@ int main(int argc, char **argv) {
 			TYPE_SWITCH,
 			TYPE_INT, &opt_verbose
 		},
+		{
+			'c', "clock",
+			"Clock for the emulated chips, in Hz. Default is " STR(DEFAULT_CLOCK),
+			"clock",
+			TYPE_OPTIONAL,
+			TYPE_INT, &opt_clock
+		},
 		CMDLINE_ARG_TERMINATOR
 	}, 1, 0, "voice.opm/dmp/ins/tfi/y12");
 
@@ -173,7 +182,7 @@ int main(int argc, char **argv) {
 
 	init_jack();
 
-	fmtoy_init(&fmtoy, sr);
+	fmtoy_init(&fmtoy, opt_clock, sr);
 	for(int i = optind; i < argc; i++)
 		fmtoy_load_voice(&fmtoy, argv[i]);
 	for(int i = 0; i < 16; i++)

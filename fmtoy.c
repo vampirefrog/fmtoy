@@ -25,9 +25,9 @@ static void fmtoy_set_buf_size(struct fmtoy *fmtoy, int size) {
 	}
 }
 
-void fmtoy_init(struct fmtoy *fmtoy, int sample_rate) {
+void fmtoy_init(struct fmtoy *fmtoy, int clock, int sample_rate) {
 	fmtoy->sample_rate = sample_rate;
-
+	fmtoy->clock = clock;
 	fmtoy->pitch_bend_range = 2;
 
 	fmtoy->render_buf_l = fmtoy->render_buf_r = 0;
@@ -43,7 +43,7 @@ void fmtoy_init(struct fmtoy *fmtoy, int sample_rate) {
 
 	for(int i = 0; i < 16; i++) {
 		if(fmtoy->channels[i].chip && fmtoy->channels[i].chip->init) {
-			fmtoy->channels[i].chip->init(fmtoy, fmtoy->sample_rate, &fmtoy->channels[i]);
+			fmtoy->channels[i].chip->init(fmtoy, fmtoy->clock, fmtoy->sample_rate, &fmtoy->channels[i]);
 		}
 	}
 }
