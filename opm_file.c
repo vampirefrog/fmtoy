@@ -48,7 +48,7 @@ ALL_STATES
 			opm->voices[curVoice].lfo_amd = params[1]; \
 			opm->voices[curVoice].lfo_pmd = params[2]; \
 			opm->voices[curVoice].lfo_wf = params[3]; \
-			opm->voices[curVoice].lfo_nfrq = params[4]; \
+			opm->voices[curVoice].nfrq = params[4]; \
 		} else if(!strcmp(paramName, "CH")) { \
 			if(paramNum != 7) { \
 				fprintf(stderr, "CH parameters %d != 7\n", paramNum); \
@@ -77,7 +77,7 @@ ALL_STATES
 			opm->voices[curVoice].operators[opNum].mul = params[7]; \
 			opm->voices[curVoice].operators[opNum].dt1 = params[8]; \
 			opm->voices[curVoice].operators[opNum].dt2 = params[9]; \
-			opm->voices[curVoice].operators[opNum].ams_en = params[10]; \
+			opm->voices[curVoice].operators[opNum].ame = params[10]; \
 		} \
 	} \
 }
@@ -248,6 +248,53 @@ ALL_STATES
 					APPEND_VOICE_NAME_CHAR;
 				}
 				break;
+		}
+	}
+
+	/* Mark "no Name" voices as unused */
+	for(int i = 0; i < OPM_FILE_MAX_VOICES; i++) {
+		struct opm_file_voice *v = &opm->voices[i];
+
+		/* Don't mark already unused voices as unused */
+		if(!v->used)
+			continue;
+
+		int unused = 1;
+
+		for(int k = 0; k < 4; k++) {
+			if(
+				v->operators[k].ar != 31 ||
+				v->operators[k].d1r != 0 ||
+				v->operators[k].d2r != 0 ||
+				v->operators[k].rr != 4 ||
+				v->operators[k].d1l != 0 ||
+				v->operators[k].tl != 0 ||
+				v->operators[k].ks != 0 ||
+				v->operators[k].mul != 1 ||
+				v->operators[k].dt1 != 0 ||
+				v->operators[k].dt2 != 0 ||
+				v->operators[k].ame != 0
+			) {
+				unused = 0;
+				break;
+			}
+		}
+
+		if(unused &&
+			v->lfo_lfrq == 0 &&
+			v->lfo_amd == 0 &&
+			v->lfo_pmd == 0 &&
+			v->lfo_wf == 0 &&
+			v->nfrq == 0 &&
+			v->ch_pan == 64 &&
+			v->ch_fl == 0 &&
+			v->ch_con == 0 &&
+			v->ch_ams == 0 &&
+			v->ch_pms == 0 &&
+			v->ch_slot == 64 &&
+			v->ch_ne == 0
+		) {
+			opm->voices[i].used = 0;
 		}
 	}
 

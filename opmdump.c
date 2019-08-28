@@ -47,7 +47,7 @@ void opmdump(char *filename) {
 				opm.voices[j].operators[k].mul != 1 ||
 				opm.voices[j].operators[k].dt1 != 0 ||
 				opm.voices[j].operators[k].dt2 != 0 ||
-				opm.voices[j].operators[k].ams_en != 0
+				opm.voices[j].operators[k].ame != 0
 			) {
 				unused = 0;
 				break;
@@ -59,7 +59,7 @@ void opmdump(char *filename) {
 			opm.voices[j].lfo_amd == 0 &&
 			opm.voices[j].lfo_pmd == 0 &&
 			opm.voices[j].lfo_wf == 0 &&
-			opm.voices[j].lfo_nfrq == 0 &&
+			opm.voices[j].nfrq == 0 &&
 			opm.voices[j].ch_pan == 64 &&
 			opm.voices[j].ch_fl == 0 &&
 			opm.voices[j].ch_con == 0 &&
@@ -98,7 +98,7 @@ void opmdump(char *filename) {
 		*p++ = opm.voices[j].lfo_amd;
 		*p++ = opm.voices[j].lfo_pmd;
 		*p++ = opm.voices[j].lfo_wf;
-		*p++ = opm.voices[j].lfo_nfrq;
+		*p++ = opm.voices[j].nfrq;
 		*p++ = opm.voices[j].ch_pan;
 		*p++ = opm.voices[j].ch_fl;
 		*p++ = opm.voices[j].ch_con;
@@ -117,7 +117,7 @@ void opmdump(char *filename) {
 			*p++ = opm.voices[j].operators[k].mul;
 			*p++ = opm.voices[j].operators[k].dt1;
 			*p++ = opm.voices[j].operators[k].dt2;
-			*p++ = opm.voices[j].operators[k].ams_en;
+			*p++ = opm.voices[j].operators[k].ame;
 		}
 
 		md5_init_ctx(&ctx);
@@ -139,7 +139,7 @@ void opmdump(char *filename) {
 		printf("\t%d\t", j);
 		csv_quote(opm.voices[j].name, 0);
 
-		printf("\t%d\t%d\t%d\t%d\t%d", opm.voices[j].lfo_lfrq, opm.voices[j].lfo_amd, opm.voices[j].lfo_pmd, opm.voices[j].lfo_wf, opm.voices[j].lfo_nfrq);
+		printf("\t%d\t%d\t%d\t%d\t%d", opm.voices[j].lfo_lfrq, opm.voices[j].lfo_amd, opm.voices[j].lfo_pmd, opm.voices[j].lfo_wf, opm.voices[j].nfrq);
 		printf("\t%d\t%d\t%d\t%d\t%d\t%d\t%d", opm.voices[j].ch_pan, opm.voices[j].ch_fl, opm.voices[j].ch_con, opm.voices[j].ch_ams, opm.voices[j].ch_pms, opm.voices[j].ch_slot, opm.voices[j].ch_ne);
 
 		for(int k = 0; k < 4; k++) {
@@ -155,7 +155,7 @@ void opmdump(char *filename) {
 				opm.voices[j].operators[k].mul,
 				opm.voices[j].operators[k].dt1,
 				opm.voices[j].operators[k].dt2,
-				opm.voices[j].operators[k].ams_en
+				opm.voices[j].operators[k].ame
 			);
 		}
 
@@ -235,7 +235,7 @@ int main(int argc, char **argv) {
 				"\t%s_mul"
 				"\t%s_dt1"
 				"\t%s_dt2"
-				"\t%s_ams_en",
+				"\t%s_ame",
 				operators[i], operators[i], operators[i],
 				operators[i], operators[i], operators[i],
 				operators[i], operators[i], operators[i],

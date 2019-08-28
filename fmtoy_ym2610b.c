@@ -31,7 +31,7 @@ static void fmtoy_ym2610b_program_change(struct fmtoy *fmtoy, uint8_t program, s
 		for(int j = 0; j < 4; j++) {
 			struct fmtoy_opn_voice_operator *op = &v->operators[j];
 			ym2610_write(channel->chip->data, base+0, 0x30 + c + j * 4);
-			ym2610_write(channel->chip->data, base+1, op->dt_multi);
+			ym2610_write(channel->chip->data, base+1, op->dt_mul);
 			ym2610_write(channel->chip->data, base+0, 0x40 + c + j * 4);
 			ym2610_write(channel->chip->data, base+1, op->tl);
 			ym2610_write(channel->chip->data, base+0, 0x50 + c + j * 4);

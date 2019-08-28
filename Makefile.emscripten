@@ -1,0 +1,52 @@
+OBJS=fmtoy.o fmtoy_ym2151.o fmtoy_ym2203.o fmtoy_ym2608.o fmtoy_ym2610.o fmtoy_ym2610b.o fmtoy_ym2612.o chips/fm.o chips/fm2612.o chips/ym2151.o chips/ymdeltat.o
+EXPORTED_FUNCTIONS=[\
+	"_fmtoy_new",\
+	"_fmtoy_load_opm_voice", \
+	"_fmtoy_note_on", \
+	"_fmtoy_note_off", \
+	"_fmtoy_render", \
+	"_fmtoy_get_buf_l", \
+	"_fmtoy_get_buf_r", \
+	"_fmtoy_program_change", \
+	"_fmtoy_pitch_bend", \
+	"_fmtoy_cc", \
+	"_fmtoy_channel_name", \
+	"_fmtoy_opm_voice_new", \
+	"_fmtoy_opm_voice_free", \
+	"_fmtoy_opm_voice_init", \
+	"_fmtoy_opm_voice_set_lfo", \
+	"_fmtoy_opm_voice_set_noise", \
+	"_fmtoy_opm_voice_set_pan", \
+	"_fmtoy_opm_voice_set_feedback", \
+	"_fmtoy_opm_voice_set_connection", \
+	"_fmtoy_opm_voice_set_pms_ams", \
+	"_fmtoy_opm_voice_set_slot_mask", \
+	"_fmtoy_opm_voice_set_operator_dt1_mul", \
+	"_fmtoy_opm_voice_set_operator_tl", \
+	"_fmtoy_opm_voice_set_operator_ks_ar", \
+	"_fmtoy_opm_voice_set_operator_ame_d1r", \
+	"_fmtoy_opm_voice_set_operator_dt2_d2r", \
+	"_fmtoy_opm_voice_set_operator_d1l_rr" \
+]
+EXTRA_EXPORTED_RUNTIME_METHODS=["ccall", "cwrap"]
+CFLAGS=-Wall
+LDFLAGS=-s EXPORTED_FUNCTIONS='$(EXPORTED_FUNCTIONS)' -s EXTRA_EXPORTED_RUNTIME_METHODS='$(EXTRA_EXPORTED_RUNTIME_METHODS)' -s ENVIRONMENT="web"
+EMCC=emcc
+EMPP=em++
+
+all: fmtoyWasm.js fmtoyAsm.js
+
+fmtoyWasm.js: $(OBJS)
+	$(EMCC) $^ -s WASM=1 -s EXPORT_ES6=1 -s MODULARIZE=1 $(LDFLAGS) -o $@
+	sed -i '1s/^/\/* eslint-disable *\/ /' $@
+
+fmtoyAsm.js: $(OBJS)
+	$(EMCC) $^ -s WASM=0 -s EXPORT_ES6=1 -s MODULARIZE=1 $(LDFLAGS) -o $@
+	sed -i '1s/^/\/* eslint-disable *\/ /' $@
+
+%.o: %.c
+	$(EMCC) $(CFLAGS) -c $< -o $@
+
+clean:
+	rm -f *.js *.wasm *.o chips/*.o
+

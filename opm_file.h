@@ -5,13 +5,13 @@
 #include <stdlib.h>
 
 struct opm_file_operator {
-	uint8_t ar, d1r, d2r, rr, d1l, tl, ks, mul, dt1, dt2, ams_en;
+	uint8_t ar, d1r, d2r, rr, d1l, tl, ks, mul, dt1, dt2, ame;
 };
 
 struct opm_file_voice {
 	uint8_t used;
 	char name[256];
-	uint8_t lfo_lfrq, lfo_amd, lfo_pmd, lfo_wf, lfo_nfrq;
+	uint8_t lfo_lfrq, lfo_amd, lfo_pmd, lfo_wf, nfrq;
 	uint8_t ch_pan, ch_fl, ch_con, ch_ams, ch_pms, ch_slot, ch_ne;
 	struct opm_file_operator operators[4];
 };
