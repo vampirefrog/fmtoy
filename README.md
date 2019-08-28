@@ -5,14 +5,14 @@ Currently only targetting jack audio and ALSA, it accepts MIDI input, and emulat
 
 You can get a bunch of `.OPM` files from [KVR forum](https://www.kvraudio.com/forum/viewtopic.php?t=277864).
 
-| MIDI Channel  | Chip      |
-| ------------- |-----------|
-| 1             | YM2151    |
-| 2             | YM2203    |
-| 3             | YM2608    |
-| 4             | YM2610    |
-| 5             | YM2610b   |
-| 6             | YM2612    |
+| MIDI Channel  | Chip      | Polyphony |
+| ------------- |-----------|----------:|
+| 1             | YM2151    |         8 |
+| 2             | YM2203    |         3 |
+| 3             | YM2608    |         6 |
+| 4             | YM2610    |         6 |
+| 5             | YM2610b   |         6 |
+| 6             | YM2612    |         6 |
 
 vgm2opm
 -------
