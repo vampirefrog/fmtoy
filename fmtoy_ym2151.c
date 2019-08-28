@@ -23,7 +23,7 @@ static void fmtoy_ym2151_program_change(struct fmtoy *fmtoy, uint8_t program, st
 			ym2151_write_reg(channel->chip->data, 0x40 + i + j * 8, op->dt1_mul);
 			ym2151_write_reg(channel->chip->data, 0x60 + i + j * 8, op->tl);
 			ym2151_write_reg(channel->chip->data, 0x80 + i + j * 8, op->ks_ar);
-			ym2151_write_reg(channel->chip->data, 0xa0 + i + j * 8, op->ams_en_d1r);
+			ym2151_write_reg(channel->chip->data, 0xa0 + i + j * 8, op->ame_d1r);
 			ym2151_write_reg(channel->chip->data, 0xc0 + i + j * 8, op->dt2_d2r);
 			ym2151_write_reg(channel->chip->data, 0xe0 + i + j * 8, op->d1l_rr);
 		}

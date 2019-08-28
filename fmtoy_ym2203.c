@@ -26,7 +26,7 @@ static void fmtoy_ym2203_program_change(struct fmtoy *fmtoy, uint8_t program, st
 		for(int j = 0; j < 4; j++) {
 			struct fmtoy_opn_voice_operator *op = &v->operators[j];
 			ym2203_write(channel->chip->data, 0, 0x30 + i + j * 4);
-			ym2203_write(channel->chip->data, 1, op->dt_multi);
+			ym2203_write(channel->chip->data, 1, op->dt_mul);
 			ym2203_write(channel->chip->data, 0, 0x40 + i + j * 4);
 			ym2203_write(channel->chip->data, 1, op->tl);
 			ym2203_write(channel->chip->data, 0, 0x50 + i + j * 4);

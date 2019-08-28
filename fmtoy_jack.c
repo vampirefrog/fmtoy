@@ -5,6 +5,7 @@
 #include "tools.h"
 #include "opm_file.h"
 #include "fmtoy.h"
+#include "fmtoy_loaders.h"
 #include "midi.h"
 
 typedef jack_default_audio_sample_t sample_t;
@@ -29,8 +30,8 @@ int process(jack_nframes_t nframes, void *arg) {
 	fmtoy_render(&fmtoy, nframes);
 
 	for(int i = 0; i < nframes; i++) {
-		buffers[0][i] = fmtoy.render_buf_l[i] / 16383.0f;
-		buffers[1][i] = fmtoy.render_buf_r[i] / 16383.0f;
+		buffers[0][i] = fmtoy.render_buf_l[i] / 8191.0f;
+		buffers[1][i] = fmtoy.render_buf_r[i] / 8191.0f;
 	}
 
 	return 0;
@@ -184,7 +185,7 @@ int main(int argc, char **argv) {
 
 	fmtoy_init(&fmtoy, opt_clock, sr);
 	for(int i = optind; i < argc; i++)
-		fmtoy_load_voice(&fmtoy, argv[i]);
+		fmtoy_load_voice_file(&fmtoy, argv[i]);
 	for(int i = 0; i < 16; i++)
 		fmtoy_program_change(&fmtoy, i, 0);
 

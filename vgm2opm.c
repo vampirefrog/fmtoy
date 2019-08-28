@@ -88,7 +88,7 @@ int vgm_cmd_size(uint8_t *bytes, int remaining_bytes) {
 }
 
 struct opn_voice_operator {
-	uint8_t dt_multi;
+	uint8_t dt_mul;
 	uint8_t tl;
 	uint8_t ks_ar;
 	uint8_t am_dr;
@@ -112,7 +112,7 @@ void opn_voice_dump(struct opn_voice *v) {
 	for(int i = 0; i < 4; i++) {
 		struct opn_voice_operator *op = &v->operators[i];
 		printf("operator = %d\n", i+1);
-		printf("dt=%d multi=%d\n", op->dt_multi >> 4 & 0x07, op->dt_multi & 0x0f);
+		printf("dt=%d multi=%d\n", op->dt_mul >> 4 & 0x07, op->dt_mul & 0x0f);
 		printf("tl=%d\n", op->tl);
 		printf("ks=%d ar=%d\n", op->ks_ar >> 6 & 0x03, op->ks_ar & 0x1f);
 		printf("am=%d dr=%d\n", op->am_dr >> 7, op->am_dr & 0x1f);
@@ -152,8 +152,8 @@ void opn_voice_dump_opm(struct opn_voice *v, int n) {
 			op->sl_rr >> 4,      // SL -> D1L
 			op->tl & 0x7f,       // TL -> TL
 			op->ks_ar >> 6,      // KS -> KS
-			op->dt_multi & 0x0f, // MULTI -> MUL
-			detune_values[op->dt_multi >> 4 & 0x07] // DT -> DT1
+			op->dt_mul & 0x0f, // MULTI -> MUL
+			detune_values[op->dt_mul >> 4 & 0x07] // DT -> DT1
 		);
 	}
 	printf("\n");
@@ -166,7 +166,7 @@ void push_opn_voice(uint8_t *regs, uint8_t port, uint8_t chan, uint8_t mask, int
 	voice.fb_connect = ofs[0xb0];
 	voice.vgm_ofs = vgm_ofs;
 	for(int i = 0; i < 4; i++) {
-		voice.operators[i].dt_multi = ofs[0x30 + i * 4];
+		voice.operators[i].dt_mul = ofs[0x30 + i * 4];
 		voice.operators[i].tl       = ofs[0x40 + i * 4];
 		voice.operators[i].ks_ar    = ofs[0x50 + i * 4];
 		voice.operators[i].am_dr    = ofs[0x60 + i * 4];
@@ -187,7 +187,7 @@ void push_opn_voice(uint8_t *regs, uint8_t port, uint8_t chan, uint8_t mask, int
 			struct opn_voice_operator *o1 = &v->operators[j];
 			struct opn_voice_operator *o2 = &voice.operators[j];
 			if(
-				o1->dt_multi != o2->dt_multi ||
+				o1->dt_mul != o2->dt_mul ||
 				o1->ks_ar != o2->ks_ar ||
 				o1->am_dr != o2->am_dr ||
 				o1->sr != o2->sr ||
