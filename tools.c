@@ -7,7 +7,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#ifndef __MINGW32__
 #include <glob.h>
+#endif
 #include <zlib.h>
 #include "tools.h"
 
@@ -100,46 +102,6 @@ int gcd(int a, int b) {
 	}
 
 	return b;
-}
-
-int find_pdx_file(const char *mdx_file_path, const char *pdx_filename, char *out, int out_len) {
-	char *s = strdup(mdx_file_path);
-	char *d = dirname(s);
-
-	char buf[256];
-	struct stat st;
-
-	*out = 0;
-
-	for(int i = 0; i < 2; i++) {
-		if(i == 0) {
-			snprintf(buf, sizeof(buf), "%s/%s", d, pdx_filename);
-		} else {
-			snprintf(buf, sizeof(buf), "%s/%s.PDX", d, pdx_filename);
-		}
-		int r = stat(buf, &st);
-		if(r == 0) {
-			strncpy(out, buf, out_len);
-			return 0;
-		}
-
-		char buf2[256];
-		int found = 0;
-		snprintf(buf2, sizeof(buf2), "%s/*", d);
-		glob_t pglob;
-		glob(buf2, GLOB_NOSORT, 0, &pglob);
-		for(int i = 0; i < pglob.gl_pathc; i++) {
-			if(!strcasecmp(pglob.gl_pathv[i], buf)) {
-				strncpy(out, pglob.gl_pathv[i], out_len);
-				found = 1;
-			}
-		}
-		globfree(&pglob);
-		if(found)
-			return 0;
-	}
-
-	return 0;
 }
 
 void csv_quote(char *str, size_t len) {

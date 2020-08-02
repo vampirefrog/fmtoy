@@ -1,5 +1,6 @@
 CFLAGS=-ggdb -Wall $(shell pkg-config alsa jack --cflags)
 CC=gcc
+CXX=g++
 
 PROGS=vgm2opm opmdump insdump dmpdump tfidump y12dump fmtoy_jack
 all: $(PROGS)
