@@ -8,3 +8,6 @@ fmtoy_jack
 *.d
 *.o
 *.sublime-workspace
+fmtoyAsm.js
+fmtoyWasm.js
+fmtoyWasm.wasm
