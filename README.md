@@ -23,3 +23,8 @@ Please try `./fmtoy_jack --help` to see a list of command-line options.
 Dumping tools
 -------------
 `opmdump`, `insdump`, `dmpdump`, `tfidump`, `y12dump` dump voice files in csv format. These are meant for importing the data into a database.
+
+Licensing
+---------
+
+Please see the LICENSE file for more information.
