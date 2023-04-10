@@ -154,6 +154,11 @@ static float float_note_freq(float note) {
 }
 
 void fmtoy_note_on(struct fmtoy *fmtoy, uint8_t channel, uint8_t note, uint8_t velocity) {
+	if(velocity == 0) {
+		fmtoy_note_off(fmtoy, channel, note, velocity);
+		return;
+	}
+
 	if(channel < 16 && fmtoy->channels[channel].chip && fmtoy->channels[channel].chip->note_on) {
 		int chip_channel = find_unused_channel(fmtoy->channels[channel].chip->channels, fmtoy->channels[channel].chip->max_poliphony);
 		float pitch = float_note_freq((float)note + (float)fmtoy->channels[channel].pitch_bend * (float)fmtoy->pitch_bend_range / 8191.0);
