@@ -303,6 +303,7 @@ void fmtoy_opm_voice_set_operator_d1l_rr(struct fmtoy_opm_voice *voice, uint8_t 
 	voice->operators[op].d1l_rr = (d1l & 0x0f) << 4 | (rr & 0x0f);
 }
 
+#ifndef __EMSCRIPTEN__
 void fmtoy_opm_voice_dump(struct fmtoy_opm_voice *voice) {
 	printf("voice %p \"%s\"\n", voice, voice->name);
 
@@ -319,3 +320,4 @@ void fmtoy_opm_voice_dump(struct fmtoy_opm_voice *voice) {
 			i, voice->operators[i].dt1_mul, voice->operators[i].tl, voice->operators[i].ks_ar, voice->operators[i].ame_d1r, voice->operators[i].dt2_d2r, voice->operators[i].d1l_rr);
 	}
 }
+#endif

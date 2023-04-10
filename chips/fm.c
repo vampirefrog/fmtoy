@@ -1,4 +1,6 @@
+#ifndef __EMSCRIPTEN__
 #define YM2610B_WARNING
+#endif
 
 /*
 **
