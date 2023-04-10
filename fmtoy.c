@@ -14,16 +14,6 @@
 #include "fmtoy_ym2610b.h"
 #include "fmtoy_ym2612.h"
 
-static void fmtoy_set_buf_size(struct fmtoy *fmtoy, int size) {
-	if(fmtoy->buf_size < size) {
-		fmtoy->buf_size = size;
-		fmtoy->render_buf_l = realloc(fmtoy->render_buf_l, size * sizeof(*fmtoy->render_buf_l));
-		fmtoy->render_buf_r = realloc(fmtoy->render_buf_r, size * sizeof(*fmtoy->render_buf_r));
-		fmtoy->chip_buf_l = realloc(fmtoy->chip_buf_l, size * sizeof(*fmtoy->chip_buf_l));
-		fmtoy->chip_buf_r = realloc(fmtoy->chip_buf_r, size * sizeof(*fmtoy->chip_buf_r));
-	}
-}
-
 struct fmtoy *fmtoy_new(int clock, int sample_rate) {
 	struct fmtoy *t = malloc(sizeof(struct fmtoy));
 	if(!t) return 0;
@@ -154,6 +144,11 @@ static float float_note_freq(float note) {
 }
 
 void fmtoy_note_on(struct fmtoy *fmtoy, uint8_t channel, uint8_t note, uint8_t velocity) {
+	if(velocity == 0) {
+		fmtoy_note_off(fmtoy, channel, note, velocity);
+		return;
+	}
+
 	if(channel < 16 && fmtoy->channels[channel].chip && fmtoy->channels[channel].chip->note_on) {
 		int chip_channel = find_unused_channel(fmtoy->channels[channel].chip->channels, fmtoy->channels[channel].chip->max_poliphony);
 		float pitch = float_note_freq((float)note + (float)fmtoy->channels[channel].pitch_bend * (float)fmtoy->pitch_bend_range / 8191.0);
@@ -182,6 +177,16 @@ void fmtoy_pitch_bend(struct fmtoy *fmtoy, uint8_t channel, int bend) {
 			float pitch = float_note_freq((float)fmtoy->channels[channel].chip->channels[i].note + (float)fmtoy->channels[channel].pitch_bend * (float)fmtoy->pitch_bend_range / 8191.0);
 			fmtoy->channels[channel].chip->pitch_bend(fmtoy, i, pitch, &fmtoy->channels[channel]);
 		}
+	}
+}
+
+static void fmtoy_set_buf_size(struct fmtoy *fmtoy, int size) {
+	if(fmtoy->buf_size < size) {
+		fmtoy->buf_size = size;
+		fmtoy->render_buf_l = realloc(fmtoy->render_buf_l, size * sizeof(*fmtoy->render_buf_l));
+		fmtoy->render_buf_r = realloc(fmtoy->render_buf_r, size * sizeof(*fmtoy->render_buf_r));
+		fmtoy->chip_buf_l = realloc(fmtoy->chip_buf_l, size * sizeof(*fmtoy->chip_buf_l));
+		fmtoy->chip_buf_r = realloc(fmtoy->chip_buf_r, size * sizeof(*fmtoy->chip_buf_r));
 	}
 }
 
