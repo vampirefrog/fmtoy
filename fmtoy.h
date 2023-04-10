@@ -101,7 +101,9 @@ const char *fmtoy_channel_name(struct fmtoy *fmtoy, uint8_t channel);
 struct fmtoy_opm_voice *fmtoy_opm_voice_new();
 int fmtoy_opm_voice_free(struct fmtoy_opm_voice *voice);
 void fmtoy_opm_voice_init(struct fmtoy_opm_voice *voice);
+#ifndef __EMSCRIPTEN__
 void fmtoy_opm_voice_dump(struct fmtoy_opm_voice *voice);
+#endif
 void fmtoy_opm_voice_set_lfo(struct fmtoy_opm_voice *voice, uint8_t lfrq, uint8_t pmd, uint8_t amd, uint8_t w);
 void fmtoy_opm_voice_set_noise(struct fmtoy_opm_voice *voice, uint8_t ne, uint8_t nfrq);
 void fmtoy_opm_voice_set_pan(struct fmtoy_opm_voice *voice, uint8_t rl);
