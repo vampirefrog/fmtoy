@@ -11,3 +11,4 @@ fmtoy_jack
 fmtoyAsm.js
 fmtoyWasm.js
 fmtoyWasm.wasm
+fmtoyAudioWorklet.js

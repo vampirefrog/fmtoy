@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">
+	<title>FM Toy Demo</title>
+</head>
+<body>
+	<button onmousedown="noteOn(60, 100)" onmouseup="noteOff(60, 100)">Start</button><br />
+	<div class="keyboard" id="keyboard" style="width: 100%">
+	</div>
+	Patch:<select onchange="setVoice(this.value)">
+		<option value="bass" selected>Bass</option>
+	</select>
+	<table>
+		<tr><td>CC 1</td><td>lfo_depth</td><td><input type="range" min="0" max="127" name="lfo_depth" id="lfo_depth" oninput="setCC(1, this.value)"></td></tr>
+		<tr><td>CC 7</td><td>volume</td><td><input type="range" min="0" max="127" name="volume" id="volume" oninput="setCC(7, this.value)"></td></tr>
+		<tr><td>CC 91</td><td>unison_spread</td><td><input type="range" min="0" max="127" name="unison_spread" id="unison_spread" oninput="setCC(91, this.value)"></td></tr>
+		<tr><td>CC 93</td><td>stereo_spread</td><td><input type="range" min="0" max="127" name="stereo_spread" id="stereo_spread" oninput="setCC(93, this.value)"></td></tr>
+		<tr><td>CC 74</td><td>cutoff_freq</td><td><input type="range" min="0" max="127" name="cutoff_freq" id="cutoff_freq" oninput="setCC(74, this.value)"></td></tr>
+		<tr><td>CC 71</td><td>resonance</td><td><input type="range" min="0" max="127" name="resonance" id="resonance" oninput="setCC(71, this.value)"></td></tr>
+	</table>
+	<script>
+		const patches = {
+			bass: {
+				pan: 3,
+				pms: 0,
+				ams: 0,
+				connection: 5,
+				feedback: 4,
+				slot_mask: 15,
+				m1_ar: 20,
+				m1_d1r: 6,
+				m1_d2r: 5,
+				m1_rr: 9,
+				m1_d1l: 2,
+				m1_tl: 19,
+				m1_ks: 1,
+				m1_mul: 1,
+				m1_dt1: 0,
+				m1_dt2: 0,
+				m1_ame: 0,
+				c1_ar: 18,
+				c1_d1r: 4,
+				c1_d2r: 3,
+				c1_rr: 9,
+				c1_d1l: 1,
+				c1_tl: 19,
+				c1_ks: 0,
+				c1_mul: 1,
+				c1_dt1: 3,
+				c1_dt2: 0,
+				c1_ame: 0,
+				m2_ar: 7,
+				m2_d1r: 8,
+				m2_d2r: 10,
+				m2_rr: 9,
+				m2_d1l: 1,
+				m2_tl: 19,
+				m2_ks: 2,
+				m2_mul: 7,
+				m2_dt1: 6,
+				m2_dt2: 0,
+				m2_ame: 0,
+				c2_ar: 21,
+				c2_d1r: 4,
+				c2_d2r: 6,
+				c2_rr: 9,
+				c2_d1l: 1,
+				c2_tl: 19,
+				c2_ks: 1,
+				c2_mul: 1,
+				c2_dt1: 3,
+				c2_dt2: 0,
+				c2_ame: 0,
+			},
+		};
+		let context = new AudioContext();
+		let workletNode;
+		context.audioWorklet.addModule('fmtoyAudioWorklet.js').then(() => {
+			workletNode = new AudioWorkletNode(context, 'fmtoy-wasm', {
+				numberOfInputs: 0,
+				numberOfOutputs: 1,
+				outputChannelCount: [2]
+			});
+			workletNode.port.onmessage = e => {
+				console.log("message from worklet", e);
+				if(e.data.initialized) {
+					setVoice('bass');
+				}
+			};
+			workletNode.connect(context.destination);
+		});
+
+		function noteOn(note, velocity) {
+			context&&context.resume();
+			workletNode.port.postMessage({ type: 'noteOn', channel: 0, note, velocity });
+		}
+		function noteOff(note, velocity) {
+			workletNode.port.postMessage({ type: 'noteOff', channel: 0, note, velocity });
+		}
+		function setCC(cc, val) {
+			workletNode.port.postMessage({ type: 'cc', channel: 0, param: cc, value: val });
+		}
+		function setVoice(name) {
+			workletNode.port.postMessage({ type: 'loadPatch', ...patches[name] });
+		}
+
+		navigator.permissions.query({ name: "midi", sysex: true }).then((result) => {
+			navigator.requestMIDIAccess().then(midiAccess => {
+				for(const entry of midiAccess.inputs) {
+					const input = entry[1];
+					input.onmidimessage = ev => {
+						let channel = ev.data[0] & 0x0f;
+						if(channel != 0) return;
+						let cmd = ev.data[0] & 0xf0;
+						switch(cmd) {
+							case 0x90:
+								workletNode.port.postMessage({ type: 'noteOn', note: ev.data[1], velocity: ev.data[2] });
+								break;
+							case 0x80:
+								workletNode.port.postMessage({ type: 'noteOff', note: ev.data[1], velocity: ev.data[2] });
+								break;
+							case 0xb0:
+								console.log('CC', ev.data[1], ev.data[2]);
+								workletNode.port.postMessage({ type: 'cc', param: ev.data[1], value: ev.data[2] });
+								break;
+							case 0xe0:
+								workletNode.port.postMessage({ type: 'pitchBend', value: (ev.data[2] << 7) | ev.data[1] });
+								break;
+							default:
+								console.log('unhandled', cmd.toString(16), ev.data);
+						}
+					};
+				}
+			}, msg => {
+				console.error('no midi access', msg)
+			});
+		}).catch(err => {
+			// console.error('Could not query MIDI', err);
+		});
+
+		function fillKeyboard() {
+			let firstKey = 24;
+			let numKeys = 127-firstKey;
+			let html = '';
+			for(let i = firstKey; i < numKeys; i++) {
+				var octaveKey = i % 12;
+				let black = octaveKey == 1 || octaveKey == 3 || octaveKey == 6 || octaveKey == 8 || octaveKey == 10;
+				html += `
+					<div
+						class="key ${black ? 'black' : 'white'}"
+						style="width: ${100.0/numKeys}%"
+						data-note="${i}"
+						onmousedown="kbd_mousedown(event)"
+						onmouseup="kbd_mouseup(event)"
+						onmouseleave="kbd_mouseleave(event)"
+						onmouseenter="kbd_mouseenter(event)"
+						ontouchstart="kbd_touchstart(event)"
+						ontouchend="kbd_touchend(event)"
+						ontouchmove="kbd_touchmove(event)"
+						ontouchcancel="kbd_touchcancel(event)"
+						oncontextmenu="kbd_contextmenu(event)"
+					></div>`;
+			}
+			document.getElementById('keyboard').innerHTML = html;
+		}
+
+		function kbd_mousedown(event) {
+			event.preventDefault();
+			event.stopPropagation();
+			this.noteOn(parseInt(event.target.getAttribute('data-note')), 100);
+		}
+
+		function kbd_mouseup(event) {
+			event.preventDefault();
+			event.stopPropagation();
+			this.noteOff(parseInt(event.target.getAttribute('data-note')), 100);
+		}
+
+		function kbd_mouseenter(event) {
+			event.preventDefault();
+			event.stopPropagation();
+			if(event.buttons & 1)
+				this.noteOn(parseInt(event.target.getAttribute('data-note')), 100);
+		}
+
+		function kbd_mouseleave(event) {
+			event.preventDefault();
+			event.stopPropagation();
+			if(event.buttons & 1)
+				this.noteOff(parseInt(event.target.getAttribute('data-note')), 100);
+		}
+
+		function kbd_touchstart(event) {
+			event.preventDefault();
+			event.stopPropagation();
+			this.noteOn(parseInt(event.target.getAttribute('data-note')), 100);
+		}
+
+		function kbd_touchend(event) {
+			event.preventDefault();
+			event.stopPropagation();
+			this.noteOff(parseInt(event.target.getAttribute('data-note')), 100);
+		}
+
+		function kbd_touchmove(event) {
+			event.preventDefault();
+			event.stopPropagation();
+		}
+
+		function kbd_touchcancel(event) {
+			event.preventDefault();
+			event.stopPropagation();
+		}
+
+		function kbd_contextmenu(event) {
+			event.preventDefault();
+			event.stopPropagation();
+		}
+
+		fillKeyboard();
+	</script>
+	<style type="text/css">
+		.keyboard {
+			width: 100%;
+			border: 5px solid brown;
+			height: 100px;
+			position: relative;
+			overflow-x: auto;
+			overflow-y: hidden;
+		}
+		.key {
+			width: 12px;
+			height: 100%;
+			background: white;
+			float: left;
+			background: linear-gradient(-30deg,#f8f8f8,#fff);
+			-webkit-box-shadow: inset 0 1px 0 #fff,inset 0 -1px 0 #fff,inset 1px 0 0 #fff,inset -1px 0 0 #fff,0 4px 3px rgba(0,0,0,.7),inset 0 -1px 0 #fff,inset 1px 0 0 #fff,inset -1px -1px 15px rgba(0,0,0,.5),-3px 4px 6px rgba(0,0,0,.5);
+			box-shadow: inset 0 1px 0 #fff,inset 0 -1px 0 #fff,inset 1px 0 0 #fff,inset -1px 0 0 #fff,0 4px 3px rgba(0,0,0,.7),inset 0 -1px 0 #fff,inset 1px 0 0 #fff,inset -1px -1px 15px rgba(0,0,0,.5),-3px 4px 6px rgba(0,0,0,.5);
+			z-index: 1;
+		}
+		.key.black {
+			width: 7px;
+			background: black;
+			background: linear-gradient(-20deg,#222,#000,#222);
+			-webkit-box-shadow: inset 0 -1px 2px hsla(0,0%,100%,.4),0 2px 3px rgba(0,0,0,.4);
+			box-shadow: inset 0 -1px 2px hsla(0,0%,100%,.4),0 2px 3px rgba(0,0,0,.4);
+			border-color: #666 #222 #111 #555;
+			border-style: solid;
+			border-width: .2rem .4rem 1.2rem;
+			height: 60%;
+			z-index: 2;
+			margin-left: -6px;
+			margin-right: -6px;
+		}
+	</style>
+</body>
+</html>

@@ -1,0 +1,84 @@
+class FmtoyWasmProcessor extends AudioWorkletProcessor {
+	constructor(options) {
+		super(options);
+
+		this.port.onmessage = e => {
+			console.log('fmtoy worklet message', e.data);
+			switch(e.data.type) {
+				case 'noteOn':
+					this.obj.instance.exports.fmtoy_note_on(this.fmtoy, e.data.channel, e.data.note, e.data.velocity);
+					break;
+				case 'noteOff':
+					this.obj.instance.exports.fmtoy_note_off(this.fmtoy, e.data.channel, e.data.note, e.data.velocity);
+					break;
+				case 'pitchBend':
+					this.obj.instance.exports.fmtoy_pitch_bend(this.fmtoy, e.data.channel, e.data.value);
+					break;
+				case 'cc':
+					this.obj.instance.exports.fmtoy_cc(this.fmtoy, e.data.param, e.data.value);
+					break;
+				case 'loadPatch':
+					this.obj.instance.exports.fmtoy_opm_voice_init(this.opm_voice);
+					this.obj.instance.exports.fmtoy_opm_voice_set_pan(this.opm_voice, 0x03);
+					this.obj.instance.exports.fmtoy_opm_voice_set_connection(this.opm_voice, e.data.con);
+					this.obj.instance.exports.fmtoy_opm_voice_set_slot_mask(this.opm_voice, e.data.op);
+					this.obj.instance.exports.fmtoy_opm_voice_set_feedback(this.opm_voice, e.data.fl);
+					var operator_prefixes = [ 'm1', 'c1', 'm2', 'c2' ];
+					for(var i in operator_prefixes) {
+						this.obj.instance.exports.fmtoy_opm_voice_set_operator_dt1_mul(this.opm_voice, i, e.data[operator_prefixes[i]+'_dt1'], e.data[operator_prefixes[i]+'_mul']);
+						this.obj.instance.exports.fmtoy_opm_voice_set_operator_tl(this.opm_voice, i, e.data[operator_prefixes[i]+'_tl']);
+						this.obj.instance.exports.fmtoy_opm_voice_set_operator_ks_ar(this.opm_voice, i, e.data[operator_prefixes[i]+'_ks'], e.data[operator_prefixes[i]+'_ar']);
+						this.obj.instance.exports.fmtoy_opm_voice_set_operator_ame_d1r(this.opm_voice, i, e.data[operator_prefixes[i]+'_ame'], e.data[operator_prefixes[i]+'_d1r']);
+						this.obj.instance.exports.fmtoy_opm_voice_set_operator_dt2_d2r(this.opm_voice, i, e.data[operator_prefixes[i]+'_dt2'], e.data[operator_prefixes[i]+'_d2r']);
+						this.obj.instance.exports.fmtoy_opm_voice_set_operator_d1l_rr(this.opm_voice, i, e.data[operator_prefixes[i]+'_d1l'], e.data[operator_prefixes[i]+'_rr']);
+					}
+					this.obj.instance.exports.fmtoy_load_opm_voice(this.fmtoy, 0, this.opm_voice);
+					for(var j = 0; j < 6; j++)
+						this.obj.instance.exports.fmtoy_program_change(this.fmtoy, i, 0);
+					break;
+			}
+		};
+
+		const importObject = {
+			env: {
+				emscripten_memcpy_big: function() {console.log('memcpy');},
+				emscripten_resize_heap: function() {console.log('resize heap');},
+				srandom: function() { console.log('srandom'); },
+				memmove: function() { console.log('srandom'); },
+			},
+		};
+
+		this.obj = null;
+		this.fmtoy_render_buf_l = null;
+		this.fmtoy_render_buf_r = null;
+		this.opm_voice = null;
+		this.fmtoy = null;
+		WebAssembly.instantiate(wasm.buffer, importObject).then(obj => {
+			this.obj = obj;
+
+			this.fmtoy = obj.instance.exports.fmtoy.value;
+			obj.instance.exports.fmtoy_init(this.fmtoy, 4000000, sampleRate);
+			obj.instance.exports.fmtoy_render(this.fmtoy, 128);
+
+			this.fmtoy_render_buf_l = new Int32Array(obj.instance.exports.memory.buffer, obj.instance.exports.fmtoy_get_buf_l(this.fmtoy));
+			this.fmtoy_render_buf_r = new Int32Array(obj.instance.exports.memory.buffer, obj.instance.exports.fmtoy_get_buf_r(this.fmtoy));
+			this.opm_voice = obj.instance.exports.opm_voice.value;
+
+			this.port.postMessage({ initialized: true });
+		});
+	}
+
+	process(inputs, outputs) {
+		if(!this.obj) return true;
+
+		this.obj.instance.exports.fmtoy_render(this.fmtoy, 128);
+		for(let i = 0; i < 128; i++) {
+			outputs[0][0][i] = this.fmtoy_render_buf_l[i] / 32768.0;
+			outputs[0][1][i] = this.fmtoy_render_buf_r[i] / 32768.0;
+		}
+
+		return true;
+	}
+}
+
+registerProcessor('fmtoy-wasm', FmtoyWasmProcessor);
