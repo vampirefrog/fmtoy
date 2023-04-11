@@ -4,79 +4,143 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">
-	<title>FM Toy Demo</title>
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+	<title>FM Toy demo</title>
 </head>
 <body>
-	<button onmousedown="noteOn(60, 100)" onmouseup="noteOff(60, 100)">Start</button><br />
-	<div class="keyboard" id="keyboard" style="width: 100%">
+	<div class="fixed-bottom navbar-light bg-dark">
+		<div class="container">
+			<div class="row">
+				<div class="col-12 col-md-3 col-lg-2 pb-2 pt-2 order-md-3">
+					<div class="input-group">
+						<select onchange="setVoice(this.value)" class="form-control form-select-sm" id="voice">
+							<option value="synth">Synth</option>
+							<option value="bass" selected>Bass</option>
+							<option value="epiano">EPiano</option>
+						</select>
+						<button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#exampleModal">⚙️</button>
+					</div>
+				</div>
+				<div class="col-12 col-md-9 col-lg-10 order-md-1">
+					<div class="keyboard-clip">
+						<div class="keyboard-wrap">
+							<div class="keyboard" id="keyboard"></div>
+						</div>
+						<div id="suspended">
+							Please press a key or click inside the browser window to enable sound.
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
 	</div>
-	Patch:<select onchange="setVoice(this.value)">
-		<option value="bass" selected>Bass</option>
-	</select>
-	<table>
-		<tr><td>CC 1</td><td>lfo_depth</td><td><input type="range" min="0" max="127" name="lfo_depth" id="lfo_depth" oninput="setCC(1, this.value)"></td></tr>
-		<tr><td>CC 7</td><td>volume</td><td><input type="range" min="0" max="127" name="volume" id="volume" oninput="setCC(7, this.value)"></td></tr>
-		<tr><td>CC 91</td><td>unison_spread</td><td><input type="range" min="0" max="127" name="unison_spread" id="unison_spread" oninput="setCC(91, this.value)"></td></tr>
-		<tr><td>CC 93</td><td>stereo_spread</td><td><input type="range" min="0" max="127" name="stereo_spread" id="stereo_spread" oninput="setCC(93, this.value)"></td></tr>
-		<tr><td>CC 74</td><td>cutoff_freq</td><td><input type="range" min="0" max="127" name="cutoff_freq" id="cutoff_freq" oninput="setCC(74, this.value)"></td></tr>
-		<tr><td>CC 71</td><td>resonance</td><td><input type="range" min="0" max="127" name="resonance" id="resonance" oninput="setCC(71, this.value)"></td></tr>
-	</table>
+	<div class="container mt-4">
+		<div class="row">
+			<div class="col-md-4">
+				<h1>FM Toy demo</h1>
+			</div>
+			<div class="col-md-4">
+				<p>This is a demo meant to demonstrate WebAssembly in AudioWorklet.</p>
+			</div>
+			<div class="col-md-4">
+				<p>You can use your keyboard, mouse or MIDI keyboard to play.</p>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-12">
+				<a target="_blank" href="https://github.com/vampirefrog/fmtoy">FMToy</a> &bull;
+				<a target="_blank" href="https://vampi.tech">Vampi Tech</a> &bull;
+				<a target="_blank" href="https://emscripten.org/">Emscripten</a> &bull;
+				<a target="_blank" href="https://webassembly.org/">WebAssembly</a>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal fade" tabindex="-1" id="exampleModal">
+		<div class="modal-dialog  modal-dialog-centered">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title">Midi devices</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					<div id="midiDevices"></div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
 	<script>
 		const patches = {
-			bass: {
+			synth: {
 				pan: 3,
 				pms: 0,
 				ams: 0,
 				connection: 5,
 				feedback: 4,
 				slot_mask: 15,
-				m1_ar: 20,
-				m1_d1r: 6,
-				m1_d2r: 5,
-				m1_rr: 9,
-				m1_d1l: 2,
-				m1_tl: 19,
-				m1_ks: 1,
-				m1_mul: 1,
-				m1_dt1: 0,
-				m1_dt2: 0,
-				m1_ame: 0,
-				c1_ar: 18,
-				c1_d1r: 4,
-				c1_d2r: 3,
-				c1_rr: 9,
-				c1_d1l: 1,
-				c1_tl: 19,
-				c1_ks: 0,
-				c1_mul: 1,
-				c1_dt1: 3,
-				c1_dt2: 0,
-				c1_ame: 0,
-				m2_ar: 7,
-				m2_d1r: 8,
-				m2_d2r: 10,
-				m2_rr: 9,
-				m2_d1l: 1,
-				m2_tl: 19,
-				m2_ks: 2,
-				m2_mul: 7,
-				m2_dt1: 6,
-				m2_dt2: 0,
-				m2_ame: 0,
-				c2_ar: 21,
-				c2_d1r: 4,
-				c2_d2r: 6,
-				c2_rr: 9,
-				c2_d1l: 1,
-				c2_tl: 19,
-				c2_ks: 1,
-				c2_mul: 1,
-				c2_dt1: 3,
-				c2_dt2: 0,
-				c2_ame: 0,
+				m1_ar: 20, m1_d1r: 6, m1_d2r: 5, m1_rr: 9, m1_d1l: 2, m1_tl: 19, m1_ks: 1, m1_mul: 1, m1_dt1: 0, m1_dt2: 0, m1_ame: 0,
+				c1_ar: 18, c1_d1r: 4, c1_d2r: 3, c1_rr: 9, c1_d1l: 1, c1_tl: 19, c1_ks: 0, c1_mul: 1, c1_dt1: 3, c1_dt2: 0, c1_ame: 0,
+				m2_ar: 7, m2_d1r: 8, m2_d2r: 10, m2_rr: 9, m2_d1l: 1, m2_tl: 19, m2_ks: 2, m2_mul: 7, m2_dt1: 6, m2_dt2: 0, m2_ame: 0,
+				c2_ar: 21, c2_d1r: 4, c2_d2r: 6, c2_rr: 9, c2_d1l: 1, c2_tl: 19, c2_ks: 1, c2_mul: 1, c2_dt1: 3, c2_dt2: 0, c2_ame: 0,
+			},
+			bass: {
+				lfo_freq: 0,
+				lfo_pmd: 0,
+				lfo_amd: 0,
+				lfo_waveform: 0,
+				noise_enable: 0,
+				noise_freq: 0,
+				pan: 3,
+				pms: 0,
+				ams: 0,
+				connection: 3,
+				feedback: 7,
+				slot_mask: 15,
+				m1_ar: 31, m1_d1r: 15, m1_d2r: 0, m1_rr: 15, m1_d1l: 14, m1_tl: 39, m1_ks: 2, m1_mul: 14, m1_dt1: 3, m1_dt2: 0, m1_ame: 0,
+				c1_ar: 31, c1_d1r: 14, c1_d2r: 0, c1_rr: 15, c1_d1l: 14, c1_tl: 24, c1_ks: 0, c1_mul: 1, c1_dt1: 3, c1_dt2: 0, c1_ame: 0,
+				m2_ar: 31, m2_d1r: 9, m2_d2r: 0, m2_rr: 15, m2_d1l: 14, m2_tl: 24, m2_ks: 0, m2_mul: 0, m2_dt1: 3, m2_dt2: 0, m2_ame: 0,
+				c2_ar: 31, c2_d1r: 9, c2_d2r: 0, c2_rr: 15, c2_d1l: 14, c2_tl: 19, c2_ks: 0, c2_mul: 0, c2_dt1: 3, c2_dt2: 0, c2_ame: 0,
+			},
+			epiano: {
+				lfo_freq: 0,
+				lfo_pmd: 0,
+				lfo_amd: 0,
+				lfo_waveform: 0,
+				noise_enable: 0,
+				noise_freq: 0,
+				pan: 3,
+				pms: 0,
+				ams: 0,
+				connection: 4,
+				feedback: 4,
+				slot_mask: 15,
+				m1_ar: 30, m1_d1r: 31, m1_d2r: 10, m1_rr: 3, m1_d1l: 0, m1_tl: 40, m1_ks: 1, m1_mul: 10, m1_dt1: 6, m1_dt2: 0, m1_ame: 0,
+				c1_ar: 23, c1_d1r: 31, c1_d2r: 0, c1_rr: 5, c1_d1l: 0, c1_tl: 39, c1_ks: 1, c1_mul: 1, c1_dt1: 5, c1_dt2: 0, c1_ame: 0,
+				m2_ar: 30, m2_d1r: 31, m2_d2r: 5, m2_rr: 4, m2_d1l: 0, m2_tl: 30, m2_ks: 1, m2_mul: 10, m2_dt1: 3, m2_dt2: 0, m2_ame: 0,
+				c2_ar: 24, c2_d1r: 31, c2_d2r: 13, c2_rr: 5, c2_d1l: 0, c2_tl: 39, c2_ks: 1, c2_mul: 1, c2_dt1: 3, c2_dt2: 0, c2_ame: 0,
 			},
 		};
 		let context = new AudioContext();
+		let prevState = null;
+		let checkState = () => {
+			if(prevState != context.state) {
+				if(context.state == 'suspended') {
+					document.getElementById('suspended').style.display = 'block';
+				} else if(context.state == 'running') {
+					document.getElementById('suspended').style.display = 'none';
+				}
+			}
+			prevState = context.state;
+			window.requestAnimationFrame(checkState);
+		};
+		checkState();
+
+		document.addEventListener('click', () => context.resume());
+
 		let workletNode;
 		context.audioWorklet.addModule('fmtoyAudioWorklet.js').then(() => {
 			workletNode = new AudioWorkletNode(context, 'fmtoy-wasm', {
@@ -85,31 +149,31 @@
 				outputChannelCount: [2]
 			});
 			workletNode.port.onmessage = e => {
-				console.log("message from worklet", e);
 				if(e.data.initialized) {
-					setVoice('bass');
+					setVoice(document.getElementById('voice').value);
 				}
 			};
 			workletNode.connect(context.destination);
 		});
 
 		function noteOn(note, velocity) {
-			context&&context.resume();
-			workletNode.port.postMessage({ type: 'noteOn', channel: 0, note, velocity });
+			workletNode&&workletNode.port.postMessage({ type: 'noteOn', channel: 0, note, velocity });
 		}
 		function noteOff(note, velocity) {
-			workletNode.port.postMessage({ type: 'noteOff', channel: 0, note, velocity });
+			workletNode&&workletNode.port.postMessage({ type: 'noteOff', channel: 0, note, velocity });
 		}
 		function setCC(cc, val) {
-			workletNode.port.postMessage({ type: 'cc', channel: 0, param: cc, value: val });
+			workletNode&&workletNode.port.postMessage({ type: 'cc', channel: 0, param: cc, value: val });
 		}
 		function setVoice(name) {
-			workletNode.port.postMessage({ type: 'loadPatch', ...patches[name] });
+			workletNode&&workletNode.port.postMessage({ type: 'loadPatch', ...patches[name] });
 		}
 
 		navigator.permissions.query({ name: "midi", sysex: true }).then((result) => {
 			navigator.requestMIDIAccess().then(midiAccess => {
+				let devicesHtml = ''
 				for(const entry of midiAccess.inputs) {
+					devicesHtml += '<label><input type="checkbox" name="midiDevices[]" checked disabled value="'+entry[0]+'"> ' + entry[1].manufacturer + ' ' + entry[1].name + ' (' + entry[1].state + ')</label><br />';
 					const input = entry[1];
 					input.onmidimessage = ev => {
 						let channel = ev.data[0] & 0x0f;
@@ -117,23 +181,26 @@
 						let cmd = ev.data[0] & 0xf0;
 						switch(cmd) {
 							case 0x90:
-								workletNode.port.postMessage({ type: 'noteOn', note: ev.data[1], velocity: ev.data[2] });
+								if(ev.data[2] > 0)
+									keyDown(ev.data[1], ev.data[2]);
+								else
+									keyUp(ev.data[1], ev.data[2]);
 								break;
 							case 0x80:
-								workletNode.port.postMessage({ type: 'noteOff', note: ev.data[1], velocity: ev.data[2] });
+								keyUp(ev.data[1], ev.data[2]);
 								break;
 							case 0xb0:
-								console.log('CC', ev.data[1], ev.data[2]);
-								workletNode.port.postMessage({ type: 'cc', param: ev.data[1], value: ev.data[2] });
+								workletNode&&workletNode.port.postMessage({ type: 'cc', param: ev.data[1], value: ev.data[2] });
 								break;
 							case 0xe0:
-								workletNode.port.postMessage({ type: 'pitchBend', value: (ev.data[2] << 7) | ev.data[1] });
+								workletNode&&workletNode.port.postMessage({ type: 'pitchBend', value: (ev.data[2] << 7) | ev.data[1] });
 								break;
 							default:
 								console.log('unhandled', cmd.toString(16), ev.data);
 						}
 					};
 				}
+				document.getElementById('midiDevices').innerHTML = devicesHtml;
 			}, msg => {
 				console.error('no midi access', msg)
 			});
@@ -141,68 +208,157 @@
 			// console.error('Could not query MIDI', err);
 		});
 
+		const chars = [
+			{ key: 'z', note: 48, },
+			{ key: 's', note: 49, },
+			{ key: 'x', note: 50, },
+			{ key: 'd', note: 51, },
+			{ key: 'c', note: 52, },
+			{ key: 'v', note: 53, },
+			{ key: 'g', note: 54, },
+			{ key: 'b', note: 55, },
+			{ key: 'h', note: 56, },
+			{ key: 'n', note: 57, },
+			{ key: 'j', note: 58, },
+			{ key: 'm', note: 59, },
+			{ key: ',', note: 60, },
+			{ key: 'l', note: 61, },
+			{ key: '.', note: 62, },
+			{ key: ';', note: 63, },
+			{ key: '/', note: 64, },
+
+			{ key: 'q', note: 60, },
+			{ key: '2', note: 61, },
+			{ key: 'w', note: 62, },
+			{ key: '3', note: 63, },
+			{ key: 'e', note: 64, },
+			{ key: 'r', note: 65, },
+			{ key: '5', note: 66, },
+			{ key: 't', note: 67, },
+			{ key: '6', note: 68, },
+			{ key: 'y', note: 69, },
+			{ key: '7', note: 70, },
+			{ key: 'u', note: 71, },
+			{ key: 'i', note: 72, },
+			{ key: '9', note: 73, },
+			{ key: 'o', note: 74, },
+			{ key: '0', note: 75, },
+			{ key: 'p', note: 76, },
+			{ key: '[', note: 77, },
+			{ key: '=', note: 78, },
+			{ key: ']', note: 79, },
+		];
+		const charObj = Object.fromEntries(chars.map(c => [c.key, c.note]));
+		const reduced = chars.reduce((acc, val) => {
+			acc[val.note] = val.key;
+			return acc;
+		}, {});
+		const keyChars = Object.entries(reduced).sort((a, b) => a[0] - b[0]).map(c => c[1]);
 		function fillKeyboard() {
-			let firstKey = 24;
-			let numKeys = 127-firstKey;
-			let html = '';
-			for(let i = firstKey; i < numKeys; i++) {
+			const firstKey = 0;
+			const lastKey = 127;
+			const numKeys = lastKey-firstKey;
+			const firstCharKey = 48;
+			let keyboard = document.getElementById('keyboard');
+			for(let i = firstKey; i <= lastKey; i++) {
+				let octave = Math.floor(i / 12);
 				var octaveKey = i % 12;
 				let black = octaveKey == 1 || octaveKey == 3 || octaveKey == 6 || octaveKey == 8 || octaveKey == 10;
-				html += `
-					<div
-						class="key ${black ? 'black' : 'white'}"
-						style="width: ${100.0/numKeys}%"
-						data-note="${i}"
-						onmousedown="kbd_mousedown(event)"
-						onmouseup="kbd_mouseup(event)"
-						onmouseleave="kbd_mouseleave(event)"
-						onmouseenter="kbd_mouseenter(event)"
-						ontouchstart="kbd_touchstart(event)"
-						ontouchend="kbd_touchend(event)"
-						ontouchmove="kbd_touchmove(event)"
-						ontouchcancel="kbd_touchcancel(event)"
-						oncontextmenu="kbd_contextmenu(event)"
-					></div>`;
+				let div = document.createElement('DIV');
+				div.classList.add('key', black ? 'black' : 'white');
+				div.note = i;
+				div.on = 0;
+				div.id = 'key'+i;
+				div.addEventListener('mousedown', kbd_mousedown);
+				div.addEventListener('mouseup', kbd_mouseup);
+				div.addEventListener('mouseleave', kbd_mouseleave);
+				div.addEventListener('mouseenter', kbd_mouseenter);
+				div.addEventListener('touchstart', kbd_touchstart);
+				div.addEventListener('touchend', kbd_touchend);
+				div.addEventListener('touchmove', kbd_touchmove);
+				div.addEventListener('touchcancel', kbd_touchcancel);
+				div.addEventListener('contextmenu', kbd_contextmenu);
+				if(i >= firstCharKey && i < firstCharKey + keyChars.length)
+					div.innerText = keyChars[i-firstCharKey].toUpperCase();
+				keyboard.appendChild(div);
 			}
-			document.getElementById('keyboard').innerHTML = html;
+		}
+
+		let pressedKeys = {};
+		document.addEventListener('keydown', ev => {
+			context.resume();
+			if(!(ev.key in charObj)) return;
+			if(ev.ctrlKey || ev.altKey || ev.shiftKey) return;
+			ev.stopPropagation();
+			ev.preventDefault();
+			if(pressedKeys[ev.key]) return;
+			pressedKeys[ev.key] = true;
+			keyDown(charObj[ev.key], 100);
+		});
+
+		document.addEventListener('keyup', ev => {
+			if(!(ev.key.toLowerCase() in charObj)) return;
+			ev.stopPropagation();
+			ev.preventDefault();
+			delete pressedKeys[ev.key.toLowerCase()];
+			keyUp(charObj[ev.key.toLowerCase()], 100);
+		});
+
+		function keyDown(note, velocity) {
+			const key = document.getElementById('key'+note);
+			if(key.on < 1) {
+				key.classList.add('active');
+				noteOn(note, velocity);
+			}
+			key.on++;
+		}
+
+		function keyUp(note, velocity) {
+			const key = document.getElementById('key'+note);
+			key.on--;
+			if(key.on > 0) return;
+			key.classList.remove('active');
+			noteOff(note, velocity);
 		}
 
 		function kbd_mousedown(event) {
+			if(event.which != 1) return;
 			event.preventDefault();
 			event.stopPropagation();
-			this.noteOn(parseInt(event.target.getAttribute('data-note')), 100);
+			keyDown(event.target.note, 100);
 		}
 
 		function kbd_mouseup(event) {
+			if(event.which != 1) return;
 			event.preventDefault();
 			event.stopPropagation();
-			this.noteOff(parseInt(event.target.getAttribute('data-note')), 100);
+			keyUp(event.target.note, 100);
 		}
 
 		function kbd_mouseenter(event) {
 			event.preventDefault();
 			event.stopPropagation();
 			if(event.buttons & 1)
-				this.noteOn(parseInt(event.target.getAttribute('data-note')), 100);
+				keyDown(event.target.note, 100);
 		}
 
 		function kbd_mouseleave(event) {
 			event.preventDefault();
 			event.stopPropagation();
 			if(event.buttons & 1)
-				this.noteOff(parseInt(event.target.getAttribute('data-note')), 100);
+				keyUp(event.target.note, 100);
 		}
 
 		function kbd_touchstart(event) {
 			event.preventDefault();
 			event.stopPropagation();
-			this.noteOn(parseInt(event.target.getAttribute('data-note')), 100);
+			keyDown(event.target.note, 100);
 		}
 
 		function kbd_touchend(event) {
 			event.preventDefault();
 			event.stopPropagation();
-			this.noteOff(parseInt(event.target.getAttribute('data-note')), 100);
+			keyUp(event.target.note, 100);
 		}
 
 		function kbd_touchmove(event) {
@@ -223,38 +379,86 @@
 		fillKeyboard();
 	</script>
 	<style type="text/css">
-		.keyboard {
-			width: 100%;
-			border: 5px solid brown;
-			height: 100px;
+		.keyboard-clip {
+			display: flex;
+			justify-content: center;
+			overflow: hidden;
 			position: relative;
-			overflow-x: auto;
-			overflow-y: hidden;
 		}
+
+		#suspended {
+			position: absolute;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			top: 0;
+			line-height: 50px;
+			background: rgba(0, 0, 0, .7);
+			z-index: 10;
+			text-align: center;
+			color: white;
+		}
+
+		.keyboard-wrap {
+			white-space: nowrap;
+			flex-shrink: 0;
+		}
+
+		.keyboard {
+			display: table-row;
+			user-select: none;
+			-webkit-user-select: none;
+			-moz-user-select: none;
+			-o-user-select: none;
+			text-overflow: clip;
+			white-space: nowrap;
+			font-size: 14px;
+		}
+
 		.key {
-			width: 12px;
-			height: 100%;
-			background: white;
-			float: left;
-			background: linear-gradient(-30deg,#f8f8f8,#fff);
-			-webkit-box-shadow: inset 0 1px 0 #fff,inset 0 -1px 0 #fff,inset 1px 0 0 #fff,inset -1px 0 0 #fff,0 4px 3px rgba(0,0,0,.7),inset 0 -1px 0 #fff,inset 1px 0 0 #fff,inset -1px -1px 15px rgba(0,0,0,.5),-3px 4px 6px rgba(0,0,0,.5);
-			box-shadow: inset 0 1px 0 #fff,inset 0 -1px 0 #fff,inset 1px 0 0 #fff,inset -1px 0 0 #fff,0 4px 3px rgba(0,0,0,.7),inset 0 -1px 0 #fff,inset 1px 0 0 #fff,inset -1px -1px 15px rgba(0,0,0,.5),-3px 4px 6px rgba(0,0,0,.5);
+			display: inline-block;
+			height: 50px;
+			border: 1px solid rgba(32,32,32,0.2);
+			border-radius: 0px 0px 5px 5px;
+			cursor: pointer;
+			box-shadow: 0px 5px 1px rgba(32,32,32,0.2);
+			-webkit-transition: margin 0.05s ease, background-color 0.05s ease, box-shadow 0.05s ease;
+			position: relative;
+			overflow: hidden;
+			padding-top: 28px;
+			text-align: center;
+		}
+
+		.key:hover {
+			background-color: #ffc107;
+		}
+		.key.active {
+			background-color: #0d6efd;
+		}
+
+		.white {
+			background-color: #ffffff;
+			color: rgb(32,32,32);
+			z-index: 0;
+			text-shadow: 0px 1px 1px rgba(32,32,32,0.5);
+			width: 24px;
 			z-index: 1;
 		}
-		.key.black {
-			width: 7px;
-			background: black;
-			background: linear-gradient(-20deg,#222,#000,#222);
-			-webkit-box-shadow: inset 0 -1px 2px hsla(0,0%,100%,.4),0 2px 3px rgba(0,0,0,.4);
-			box-shadow: inset 0 -1px 2px hsla(0,0%,100%,.4),0 2px 3px rgba(0,0,0,.4);
-			border-color: #666 #222 #111 #555;
-			border-style: solid;
-			border-width: .2rem .4rem 1.2rem;
-			height: 60%;
-			z-index: 2;
-			margin-left: -6px;
+
+		.black {
+			margin-bottom: 20px;
+			background-color: rgb(32,32,32);
+			color: #ffffff;
+			z-index: 1;
+			text-shadow: 0px -1px 1px rgba(255,255,255,0.5);
+			width: 16px;
+			height: 30px;
+			margin-left: -10px;
 			margin-right: -6px;
+			z-index: 2;
+			padding-top: 8px;
 		}
 	</style>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 </body>
 </html>
