@@ -3,7 +3,6 @@ class FmtoyWasmProcessor extends AudioWorkletProcessor {
 		super(options);
 
 		this.port.onmessage = e => {
-			console.log('fmtoy worklet message', e.data);
 			switch(e.data.type) {
 				case 'noteOn':
 					this.obj.instance.exports.fmtoy_note_on(this.fmtoy, e.data.channel, e.data.note, e.data.velocity);
@@ -73,8 +72,8 @@ class FmtoyWasmProcessor extends AudioWorkletProcessor {
 
 		this.obj.instance.exports.fmtoy_render(this.fmtoy, 128);
 		for(let i = 0; i < 128; i++) {
-			outputs[0][0][i] = this.fmtoy_render_buf_l[i] / 32768.0;
-			outputs[0][1][i] = this.fmtoy_render_buf_r[i] / 32768.0;
+			outputs[0][0][i] = this.fmtoy_render_buf_l[i] / 16384.0;
+			outputs[0][1][i] = this.fmtoy_render_buf_r[i] / 16384.0;
 		}
 
 		return true;
