@@ -40,10 +40,10 @@ class FmtoyWasmProcessor extends AudioWorkletProcessor {
 
 		const importObject = {
 			env: {
-				emscripten_memcpy_big: function() {console.log('memcpy');},
-				emscripten_resize_heap: function() {console.log('resize heap');},
-				srandom: function() { console.log('srandom'); },
-				memmove: function() { console.log('srandom'); },
+				emscripten_memcpy_big: function() {},
+				emscripten_resize_heap: function() {},
+				srandom: function() {},
+				memmove: function() {},
 			},
 		};
 
