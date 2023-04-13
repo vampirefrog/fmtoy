@@ -30,7 +30,7 @@ EXPORTED_FUNCTIONS=[\
 ]
 EXTRA_EXPORTED_RUNTIME_METHODS=["ccall", "cwrap"]
 CFLAGS=-Wall
-LDFLAGS=-s EXPORTED_FUNCTIONS='$(EXPORTED_FUNCTIONS)' -s EXTRA_EXPORTED_RUNTIME_METHODS='$(EXTRA_EXPORTED_RUNTIME_METHODS)' -s USE_ES6_IMPORT_META=0
+LDFLAGS=-s EXPORTED_FUNCTIONS='$(EXPORTED_FUNCTIONS)' -s EXTRA_EXPORTED_RUNTIME_METHODS='$(EXTRA_EXPORTED_RUNTIME_METHODS)' -s USE_ES6_IMPORT_META=0 -s ENVIRONMENT=web
 EMCC=emcc
 EMPP=em++
 
@@ -41,12 +41,12 @@ fmtowWasm.wasm fmtoyWasm.js: $(OBJS)
 	sed -i '1s/^/\/* eslint-disable *\/ /' $@
 
 fmtoyWorkletWasm.js: $(OBJS)
-	$(EMCC) $^ -s WASM=1 -s ENVIRONMENT=web -s EXPORT_ES6=1 -s MODULARIZE=1  -s SINGLE_FILE=1 $(LDFLAGS) -o $@
+	$(EMCC) $^ -s WASM=1 EXPORT_ES6=1 -s MODULARIZE=1  -s SINGLE_FILE=1 $(LDFLAGS) -o $@
 	sed -i '1s/^/\/* eslint-disable *\/ /' $@
 	sed -i "s/typeof window == 'object' || typeof importScripts == 'function'/1/g" $@
 
 fmtoyAsm.js: $(OBJS)
-	$(EMCC) $^ -s WASM=0 -s EXPORT_ES6=1 -s MODULARIZE=1 -s ENVIRONMENT=web $(LDFLAGS) -o $@
+	$(EMCC) $^ -s WASM=0 -s EXPORT_ES6=1 -s MODULARIZE=1 $(LDFLAGS) -o $@
 	sed -i '1s/^/\/* eslint-disable *\/ /' $@
 
 fmtoyAudioWorklet.js: fmtoyWasm.wasm fmtoyAudioWorklet.js.template
