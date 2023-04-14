@@ -178,13 +178,12 @@ void fmtoy_pitch_bend(struct fmtoy *fmtoy, uint8_t channel, int bend) {
 }
 
 static void fmtoy_set_buf_size(struct fmtoy *fmtoy, int size) {
-	if(fmtoy->buf_size < size) {
-		fmtoy->buf_size = size;
-		fmtoy->render_buf_l = realloc(fmtoy->render_buf_l, size * sizeof(*fmtoy->render_buf_l));
-		fmtoy->render_buf_r = realloc(fmtoy->render_buf_r, size * sizeof(*fmtoy->render_buf_r));
-		fmtoy->chip_buf_l = realloc(fmtoy->chip_buf_l, size * sizeof(*fmtoy->chip_buf_l));
-		fmtoy->chip_buf_r = realloc(fmtoy->chip_buf_r, size * sizeof(*fmtoy->chip_buf_r));
-	}
+	if(fmtoy->buf_size >= size) return;
+	fmtoy->buf_size = size;
+	fmtoy->render_buf_l = realloc(fmtoy->render_buf_l, size * sizeof(*fmtoy->render_buf_l));
+	fmtoy->render_buf_r = realloc(fmtoy->render_buf_r, size * sizeof(*fmtoy->render_buf_r));
+	fmtoy->chip_buf_l = realloc(fmtoy->chip_buf_l, size * sizeof(*fmtoy->chip_buf_l));
+	fmtoy->chip_buf_r = realloc(fmtoy->chip_buf_r, size * sizeof(*fmtoy->chip_buf_r));
 }
 
 void fmtoy_render(struct fmtoy *fmtoy, int samples) {
