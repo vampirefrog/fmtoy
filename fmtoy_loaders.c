@@ -34,7 +34,7 @@ void fmtoy_opm_voice_load_opm_file_voice(struct fmtoy_opm_voice *fmtoy_voice, st
 	fmtoy_voice->pms_ams = (opm_voice->ch_pms & 0x07) << 4 | (opm_voice->ch_ams & 0x03);
 
 	/* slot mask */
-	fmtoy_voice->sm = (opm_voice->ch_slot & 0x0f) >> 3;
+	fmtoy_voice->sm = (opm_voice->ch_slot & 0x78) >> 3;
 
 	/* operators */
 	int ops[4] = { 0, 2, 1, 3 };
