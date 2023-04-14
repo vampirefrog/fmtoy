@@ -65,6 +65,7 @@ struct fmtoy_chip {
 struct fmtoy_channel {
 	struct fmtoy_chip *chip;
 	int pitch_bend;
+	uint8_t con, op_mask, tl[4]; // used for velocity
 };
 
 struct fmtoy {
