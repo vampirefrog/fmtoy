@@ -72,8 +72,8 @@ class FmtoyWasmProcessor extends AudioWorkletProcessor {
 
 		this.obj.instance.exports.fmtoy_render(this.fmtoy, 128);
 		for(let i = 0; i < 128; i++) {
-			outputs[0][0][i] = this.fmtoy_render_buf_l[i] / 16384.0;
-			outputs[0][1][i] = this.fmtoy_render_buf_r[i] / 16384.0;
+			outputs[0][0][i] = this.fmtoy_render_buf_l[i] / 32768.0;
+			outputs[0][1][i] = this.fmtoy_render_buf_r[i] / 32768.0;
 		}
 
 		return true;
