@@ -19,7 +19,7 @@ static void fmtoy_ym2151_program_change(struct fmtoy *fmtoy, uint8_t program, st
 
 	// prepare for velocity
 	channel->con = v->rl_fb_con & 0x07;
-	channel->op_mask = v->sm << 3;
+	channel->op_mask = v->sm;
 	for(int j = 0; j < 4; j++)
 		channel->tl[j] = v->operators[j].tl;
 
@@ -51,8 +51,6 @@ static void fmtoy_ym2151_note_on(struct fmtoy *fmtoy, uint8_t chip_channel, floa
 	fmtoy_ym2151_set_pitch(fmtoy, chip_channel, pitch, channel);
 
 	// set velocity
-	int tl = 127 - velocity;
-	tl = tl * tl >> 7; // exponential curve
 	// C2
 	if(channel->op_mask & 0x40)
 		ym2151_write_reg(channel->chip->data, 0x78 + chip_channel, MIN(127, channel->tl[3] + tl));
