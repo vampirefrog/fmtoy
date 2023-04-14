@@ -22,7 +22,7 @@ class FmtoyWasmProcessor extends AudioWorkletProcessor {
 					this.obj.instance.exports.fmtoy_opm_voice_set_connection(this.opm_voice, e.data.connection);
 					this.obj.instance.exports.fmtoy_opm_voice_set_slot_mask(this.opm_voice, e.data.slot_mask);
 					this.obj.instance.exports.fmtoy_opm_voice_set_feedback(this.opm_voice, e.data.feedback);
-					var operator_prefixes = [ 'm1', 'c1', 'm2', 'c2' ];
+					var operator_prefixes = [ 'm1', 'm2', 'c1', 'c2' ];
 					for(var i in operator_prefixes) {
 						this.obj.instance.exports.fmtoy_opm_voice_set_operator_dt1_mul(this.opm_voice, i, e.data[operator_prefixes[i]+'_dt1'], e.data[operator_prefixes[i]+'_mul']);
 						this.obj.instance.exports.fmtoy_opm_voice_set_operator_tl(this.opm_voice, i, e.data[operator_prefixes[i]+'_tl']);
