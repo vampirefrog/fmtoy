@@ -14,7 +14,7 @@ class FmtoyWasmProcessor extends AudioWorkletProcessor {
 					this.obj.instance.exports.fmtoy_pitch_bend(this.fmtoy, e.data.channel, e.data.value);
 					break;
 				case 'cc':
-					this.obj.instance.exports.fmtoy_cc(this.fmtoy, e.data.param, e.data.value);
+					this.obj.instance.exports.fmtoy_cc(this.fmtoy, e.data.channel, e.data.param, e.data.value);
 					break;
 				case 'loadPatch':
 					this.obj.instance.exports.fmtoy_opm_voice_init(this.opm_voice);
