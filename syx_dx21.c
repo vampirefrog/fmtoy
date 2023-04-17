@@ -134,8 +134,8 @@ int dx21_midi_receive_vced_voice(struct dx21_midi_receiver *rx, uint8_t byte) {
 		case 57: if(byte > 99) return DX21_BAD_LFO_AMD; rx->voice.lfo_amd = byte; break;
 		case 58: if(byte > 1) return DX21_BAD_LFO_SYNC; rx->voice.lfo_sync = byte; break;
 		case 59: if(byte > 3) return DX21_BAD_LFO_WAVE; rx->voice.lfo_wave = byte; break;
-		case 60: if(byte > 7) return DX21_BAD_Pm_SEnS; rx->voice.pm_sens = byte; break;
-		case 61: if(byte > 3) return DX21_BAD_Am_SEnS; rx->voice.am_sens = byte; break;
+		case 60: if(byte > 7) return DX21_BAD_PM_SENS; rx->voice.pm_sens = byte; break;
+		case 61: if(byte > 3) return DX21_BAD_AM_SENS; rx->voice.am_sens = byte; break;
 		case 62: if(byte > 48) return DX21_BAD_MIDDLE_C; rx->voice.middle_c = byte; break;
 		case 63: if(byte > 1) return DX21_BAD_MONO_MODE; rx->voice.mono_mode = byte; break;
 		case 64: if(byte > 12) return DX21_BAD_PITCH_BEND_RANGE; rx->voice.pitch_bend_range = byte; break;
