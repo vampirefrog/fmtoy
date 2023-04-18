@@ -2,7 +2,7 @@ CFLAGS=-ggdb -Wall $(shell pkg-config alsa jack --cflags)
 CC=gcc
 CXX=g++
 
-PROGS=vgm2opm opmdump insdump dmpdump tfidump y12dump fmtoy_jack
+PROGS=fmtoy_jack
 all: $(PROGS)
 
 LIBS=-lz
@@ -11,14 +11,8 @@ LIBS+=-liconv -lws2_32
 endif
 
 .SECONDEXPANSION:
-vgm2opm_SRCS=vgm2opm.c tools.c
-opmdump_SRCS=opmdump.c tools.c opm_file.c md5.c cmdline.c
-insdump_SRCS=insdump.c tools.c ins_file.c md5.c
-dmpdump_SRCS=dmpdump.c tools.c dmp_file.c md5.c
-tfidump_SRCS=tfidump.c tools.c tfi_file.c md5.c
-y12dump_SRCS=y12dump.c tools.c y12_file.c md5.c
 fmtoy_jack_SRCS=fmtoy_jack.c fmtoy.c fmtoy_loaders.c cmdline.c tools.c midi.c \
-	opm_file.c tfi_file.c ins_file.c y12_file.c dmp_file.c \
+	opm_file.c \
 	chips/ym2151.c chips/fm.c chips/fm2612.c chips/ymdeltat.c \
 	fmtoy_ym2151.c fmtoy_ym2203.c fmtoy_ym2608.c fmtoy_ym2610.c fmtoy_ym2610b.c fmtoy_ym2612.c
 fmtoy_jack_LIBS=$(shell pkg-config alsa jack --libs)
