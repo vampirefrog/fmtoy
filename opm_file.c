@@ -66,7 +66,7 @@ ALL_STATES
 				fprintf(stderr, "Operator %c%c parameters %d != 11\n", paramName[0], paramName[1], paramNum); \
 				return -1; \
 			} \
-			int opNum = paramName[0] == 'M' ? (paramName[1] == '1' ? 0 : 2) : (paramName[1] == '1' ? 1 : 3); \
+			int opNum = paramName[0] == 'M' ? (paramName[1] == '1' ? 0 : 1) : (paramName[1] == '1' ? 2 : 3); \
 			opm->voices[curVoice].operators[opNum].ar = params[0]; \
 			opm->voices[curVoice].operators[opNum].d1r = params[1]; \
 			opm->voices[curVoice].operators[opNum].d2r = params[2]; \
