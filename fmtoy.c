@@ -93,12 +93,10 @@ void fmtoy_append_opm_voice(struct fmtoy *fmtoy, struct fmtoy_opm_voice *voice) 
 void fmtoy_program_change(struct fmtoy *fmtoy, uint8_t channel, uint8_t program) {
 	// change on all channels
 	for(int i = 0; i < 16; i++) {
+		fmtoy->channels[i].program = program;
 		if(fmtoy->channels[i].chip && fmtoy->channels[i].chip->program_change)
 			fmtoy->channels[i].chip->program_change(fmtoy, program, &fmtoy->channels[i]);
 	}
-}
-
-void fmtoy_cc(struct fmtoy *fmtoy, uint8_t channel, int cc, int value) {
 }
 
 static int find_unused_channel(struct fmtoy_chip_channel *channels, int num_channels) {
@@ -174,6 +172,19 @@ void fmtoy_pitch_bend(struct fmtoy *fmtoy, uint8_t channel, int bend) {
 			float pitch = float_note_freq((float)fmtoy->channels[channel].chip->channels[i].note + (float)fmtoy->channels[channel].pitch_bend * (float)fmtoy->pitch_bend_range / 8191.0);
 			fmtoy->channels[channel].chip->pitch_bend(fmtoy, i, pitch, &fmtoy->channels[channel]);
 		}
+	}
+}
+
+void fmtoy_mod_wheel(struct fmtoy *fmtoy, uint8_t channel, int mod) {
+	if(channel < 16 && fmtoy->channels[channel].chip && fmtoy->channels[channel].chip->mod_wheel)
+		fmtoy->channels[channel].chip->mod_wheel(fmtoy, mod, &fmtoy->channels[channel]);
+}
+
+void fmtoy_cc(struct fmtoy *fmtoy, uint8_t channel, int cc, int value) {
+	switch(cc) {
+		case 0x01:
+			fmtoy_mod_wheel(fmtoy, channel, value);
+			break;
 	}
 }
 

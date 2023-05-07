@@ -23,6 +23,9 @@ static void fmtoy_ym2151_program_change(struct fmtoy *fmtoy, uint8_t program, st
 	for(int j = 0; j < 4; j++)
 		channel->tl[j] = v->operators[j].tl;
 
+	ym2151_write_reg(channel->chip->data, 0x18, v->lfrq);
+	ym2151_write_reg(channel->chip->data, 0x0f, v->ne_nfrq);
+	ym2151_write_reg(channel->chip->data, 0x1b, v->w);
 	for(int i = 0; i < 8; i++) {
 		ym2151_write_reg(channel->chip->data, 0x20 + i, v->rl_fb_con);
 		ym2151_write_reg(channel->chip->data, 0x38 + i, v->pms_ams);
@@ -77,6 +80,9 @@ static void fmtoy_ym2151_pitch_bend(struct fmtoy *fmtoy, uint8_t chip_channel, f
 	fmtoy_ym2151_set_pitch(fmtoy, chip_channel, pitch, channel);
 }
 
+static void fmtoy_ym2151_mod_wheel(struct fmtoy *fmtoy, int mod, struct fmtoy_channel *channel) {
+	struct fmtoy_opm_voice *v = &fmtoy->opm_voices[channel->program];
+	ym2151_write_reg(channel->chip->data, 0x19, (mod * v->pmd / 127) & 0x7f | 0x80);
 static void fmtoy_ym2151_render(struct fmtoy *fmtoy, stream_sample_t **buffers, int num_samples, struct fmtoy_channel *channel) {
 	ym2151_update_one(channel->chip->data, buffers, num_samples);
 }
@@ -87,6 +93,7 @@ struct fmtoy_chip fmtoy_chip_ym2151 = {
 	.destroy = fmtoy_ym2151_destroy,
 	.program_change = fmtoy_ym2151_program_change,
 	.pitch_bend = fmtoy_ym2151_pitch_bend,
+	.mod_wheel = fmtoy_ym2151_mod_wheel,
 	.note_on = fmtoy_ym2151_note_on,
 	.note_off = fmtoy_ym2151_note_off,
 	.render = fmtoy_ym2151_render,

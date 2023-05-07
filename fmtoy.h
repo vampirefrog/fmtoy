@@ -54,6 +54,7 @@ struct fmtoy_chip {
 	int (*destroy)(struct fmtoy *, struct fmtoy_channel *);
 	void (*program_change)(struct fmtoy *, uint8_t program, struct fmtoy_channel *);
 	void (*pitch_bend)(struct fmtoy *, uint8_t chip_channel, float pitch, struct fmtoy_channel *);
+	void (*mod_wheel)(struct fmtoy *, int mod, struct fmtoy_channel *);
 	void (*note_on)(struct fmtoy *, uint8_t chip_channel, float pitch, uint8_t velocity, struct fmtoy_channel *);
 	void (*note_off)(struct fmtoy *, uint8_t chip_channel, uint8_t velocity, struct fmtoy_channel *);
 	void (*render)(struct fmtoy *, stream_sample_t **buffers, int num_samples, struct fmtoy_channel *);
@@ -64,6 +65,7 @@ struct fmtoy_chip {
 
 struct fmtoy_channel {
 	struct fmtoy_chip *chip;
+	int program;
 	int pitch_bend;
 	uint8_t con, op_mask, tl[4]; // used for velocity
 };
