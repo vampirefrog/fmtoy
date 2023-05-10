@@ -16,9 +16,9 @@ You can get a bunch of `.OPM` files from [KVR forum](https://www.kvraudio.com/fo
 
 Please try `./fmtoy_jack --help` to see a list of command-line options.
 
-Dumping tools
--------------
-`opmdump`, `insdump`, `dmpdump`, `tfidump`, `y12dump` dump voice files in csv format. These are meant for importing the data into a database.
+
+
+
 
 Licensing
 ---------
