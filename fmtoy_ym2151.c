@@ -82,7 +82,9 @@ static void fmtoy_ym2151_pitch_bend(struct fmtoy *fmtoy, uint8_t chip_channel, f
 
 static void fmtoy_ym2151_mod_wheel(struct fmtoy *fmtoy, int mod, struct fmtoy_channel *channel) {
 	struct fmtoy_opm_voice *v = &fmtoy->opm_voices[channel->program];
-	ym2151_write_reg(channel->chip->data, 0x19, (mod * v->pmd / 127) & 0x7f | 0x80);
+	ym2151_write_reg(channel->chip->data, 0x19, ((mod * v->pmd / 127) & 0x7f) | 0x80);
+}
+
 static void fmtoy_ym2151_render(struct fmtoy *fmtoy, stream_sample_t **buffers, int num_samples, struct fmtoy_channel *channel) {
 	ym2151_update_one(channel->chip->data, buffers, num_samples);
 }
