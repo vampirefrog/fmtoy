@@ -1,0 +1,3 @@
+[submodule "libfmvoice"]
+	path = libfmvoice
+	url = https://github.com/vampirefrog/libfmvoice.git
