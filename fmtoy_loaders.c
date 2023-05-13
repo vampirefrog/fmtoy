@@ -37,7 +37,7 @@ void fmtoy_opm_voice_load_opm_file_voice(struct fmtoy_opm_voice *fmtoy_voice, st
 	fmtoy_voice->sm = opm_voice->ch_slot & 0x78;
 
 	/* operators */
-	int ops[4] = { 0, 2, 1, 3 };
+	int ops[4] = { 0, 1, 2, 3 };
 	for(int j = 0; j < 4; j++) {
 		struct fmtoy_opm_voice_operator *fop = &fmtoy_voice->operators[j];
 		struct opm_file_operator *op = &opm_voice->operators[ops[j]];
