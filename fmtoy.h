@@ -39,6 +39,20 @@ struct fmtoy_opn_voice {
 	struct fmtoy_opn_voice_operator operators[4];
 };
 
+struct fmtoy_opl_voice_operator {
+	uint8_t am_vib_eg_ksr_mul, ksl_tl, ar_dr, sl_rr, ws;
+};
+
+struct fmtoy_opl_voice {
+	char name[256];
+	// per chip registers
+	uint8_t am_vib;
+	// per channel registers
+	uint8_t fb_con;
+	// operators
+	struct fmtoy_opl_voice_operator operators[2];
+};
+
 // used for tracking poliphony
 struct fmtoy_chip_channel {
 	uint8_t on, note;
@@ -60,7 +74,7 @@ struct fmtoy_chip {
 	void (*render)(struct fmtoy *, stream_sample_t **buffers, int num_samples, struct fmtoy_channel *);
 	int clock, max_poliphony;
 
-	struct fmtoy_chip_channel channels[8]; // preallocate channels for poliphony, though we won't always use all of them
+	struct fmtoy_chip_channel channels[9]; // preallocate channels for poliphony, though we won't always use all of them
 };
 
 struct fmtoy_channel {
@@ -77,6 +91,7 @@ struct fmtoy {
 
 	// voices
 	int num_voices;
+	struct fmtoy_opl_voice opl_voices[128];
 	struct fmtoy_opm_voice opm_voices[128];
 	struct fmtoy_opn_voice opn_voices[128];
 
@@ -91,6 +106,7 @@ struct fmtoy *fmtoy_new(int clock, int sample_rate);
 void fmtoy_init(struct fmtoy *fmtoy, int clock, int sample_rate);
 void fmtoy_load_opm_voice(struct fmtoy *fmtoy, int voice_num, struct fmtoy_opm_voice *voice);
 void fmtoy_append_opm_voice(struct fmtoy *fmtoy, struct fmtoy_opm_voice *voice);
+void fmtoy_append_opl_voice(struct fmtoy *fmtoy, struct fmtoy_opl_voice *voice);
 void fmtoy_opm_voice_to_fmtoy_opn_voice(struct fmtoy_opm_voice *opmv, struct fmtoy_opn_voice *opnv);
 void fmtoy_note_on(struct fmtoy *fmtoy, uint8_t channel, uint8_t note, uint8_t velocity);
 void fmtoy_note_off(struct fmtoy *fmtoy, uint8_t channel, uint8_t note, uint8_t velocity);

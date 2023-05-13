@@ -13,6 +13,7 @@
 #include "fmtoy_ym2610.h"
 #include "fmtoy_ym2610b.h"
 #include "fmtoy_ym2612.h"
+#include "fmtoy_ym3812.h"
 
 struct fmtoy *fmtoy_new(int clock, int sample_rate) {
 	struct fmtoy *t = malloc(sizeof(struct fmtoy));
@@ -38,8 +39,8 @@ void fmtoy_init(struct fmtoy *fmtoy, int clock, int sample_rate) {
 	fmtoy->channels[1].chip = &fmtoy_chip_ym2203;
 	fmtoy->channels[2].chip = &fmtoy_chip_ym2608;
 	fmtoy->channels[3].chip = &fmtoy_chip_ym2610;
-	fmtoy->channels[4].chip = &fmtoy_chip_ym2610b;
 	fmtoy->channels[5].chip = &fmtoy_chip_ym2612;
+	fmtoy->channels[6].chip = &fmtoy_chip_ym3812;
 
 	fmtoy->lfo_clock_period = sample_rate / 100; // every 10 ms fire the timer
 	fmtoy->lfo_clock_phase = 0;
@@ -90,6 +91,22 @@ void fmtoy_load_opm_voice(struct fmtoy *fmtoy, int voice_num, struct fmtoy_opm_v
 void fmtoy_append_opm_voice(struct fmtoy *fmtoy, struct fmtoy_opm_voice *voice) {
 	if(fmtoy->num_voices > 127) return;
 	fmtoy_load_opm_voice(fmtoy, fmtoy->num_voices, voice);
+	fmtoy->num_voices++;
+}
+
+void fmtoy_load_opl_voice(struct fmtoy *fmtoy, int voice_num, struct fmtoy_opl_voice *voice) {
+	/* Load OPL voice */
+	struct fmtoy_opl_voice *oplv = &fmtoy->opl_voices[voice_num];
+	memcpy(oplv, voice, sizeof(*voice));
+
+	/* And convert to OPN voice as well */
+	// struct fmtoy_opn_voice *opnv = &fmtoy->opn_voices[voice_num];
+	// fmtoy_opl_voice_to_fmtoy_opn_voice(oplv, opnv);
+}
+
+void fmtoy_append_opl_voice(struct fmtoy *fmtoy, struct fmtoy_opl_voice *voice) {
+	if(fmtoy->num_voices > 127) return;
+	fmtoy_load_opl_voice(fmtoy, fmtoy->num_voices, voice);
 	fmtoy->num_voices++;
 }
 
