@@ -1,5 +1,5 @@
 #include <jack/jack.h>
-#include <asoundlib.h>
+#include <alsa/asoundlib.h>
 
 #include "cmdline.h"
 #include "tools.h"
@@ -30,8 +30,8 @@ int process(jack_nframes_t nframes, void *arg) {
 	fmtoy_render(&fmtoy, nframes);
 
 	for(int i = 0; i < nframes; i++) {
-		buffers[0][i] = fmtoy.render_buf_l[i] / 8191.0f;
-		buffers[1][i] = fmtoy.render_buf_r[i] / 8191.0f;
+		buffers[0][i] = fmtoy.render_buf_l[i] / 32767.0f;
+		buffers[1][i] = fmtoy.render_buf_r[i] / 32767.0f;
 	}
 
 	return 0;
