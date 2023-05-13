@@ -5,14 +5,18 @@ Currently only targetting jack audio and ALSA, it accepts MIDI input, and emulat
 
 You can get a bunch of `.OPM` files from [KVR forum](https://www.kvraudio.com/forum/viewtopic.php?t=277864).
 
-| MIDI Channel  | Chip      | Polyphony |
-| ------------- |-----------|----------:|
-| 1             | YM2151    |         8 |
-| 2             | YM2203    |         3 |
-| 3             | YM2608    |         6 |
-| 4             | YM2610    |         6 |
-| 5             | YM2610b   |         6 |
-| 6             | YM2612    |         6 |
+| MIDI Channel  | Chip      |  Name  | Polyphony |
+| ------------- |-----------|:------:|----------:|
+| 1             | YM2151    |  OPM   |         8 |
+| 2             | YM2414    |  OPZ   |         8 |
+| 3             | YM2203    |  OPN   |         3 |
+| 4             | YM2608    |  OPNA  |         6 |
+| 5             | YM2610    |  OPNB  |         6 |
+| 6             | YM2610b   | OPNB-B |         6 |
+| 7             | YM2612    |  OPN2  |         6 |
+| 8             | YM3812    |  OPL2  |         9 |
+| 9             | YMF262    |  OPL3  |        18 |
+| 10            | YM2413    |  OPLL  |         1 |
 
 Please try `./fmtoy_jack --help` to see a list of command-line options.
 
