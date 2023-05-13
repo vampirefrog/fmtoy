@@ -120,11 +120,9 @@ void fmtoy_append_opl_voice(struct fmtoy *fmtoy, struct fmtoy_opl_voice *voice) 
 
 void fmtoy_program_change(struct fmtoy *fmtoy, uint8_t channel, uint8_t program) {
 	// change on all channels
-	for(int i = 0; i < 16; i++) {
-		fmtoy->channels[i].program = program;
-		if(fmtoy->channels[i].chip && fmtoy->channels[i].chip->program_change)
-			fmtoy->channels[i].chip->program_change(fmtoy, program, &fmtoy->channels[i]);
-	}
+	fmtoy->channels[channel].program = program;
+	if(fmtoy->channels[channel].chip && fmtoy->channels[channel].chip->program_change)
+		fmtoy->channels[channel].chip->program_change(fmtoy, program, &fmtoy->channels[channel]);
 }
 
 static int find_unused_channel(struct fmtoy_chip_channel *channels, int num_channels) {
