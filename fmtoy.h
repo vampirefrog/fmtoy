@@ -104,6 +104,7 @@ struct fmtoy {
 
 struct fmtoy *fmtoy_new(int clock, int sample_rate);
 void fmtoy_init(struct fmtoy *fmtoy, int clock, int sample_rate);
+void fmtoy_destroy(struct fmtoy *fmtoy);
 void fmtoy_load_opm_voice(struct fmtoy *fmtoy, int voice_num, struct fmtoy_opm_voice *voice);
 void fmtoy_append_opm_voice(struct fmtoy *fmtoy, struct fmtoy_opm_voice *voice);
 void fmtoy_append_opl_voice(struct fmtoy *fmtoy, struct fmtoy_opl_voice *voice);

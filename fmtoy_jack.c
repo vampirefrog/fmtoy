@@ -1,5 +1,6 @@
 #include <jack/jack.h>
 #include <alsa/asoundlib.h>
+#include <signal.h>
 
 #include "cmdline.h"
 #include "tools.h"
@@ -21,6 +22,14 @@ jack_port_t *output_ports[2];
 unsigned long sr;
 
 struct fmtoy fmtoy;
+
+int running = 1;
+void int_handler(int dummy) {
+    fmtoy_destroy(&fmtoy);
+    signal(SIGINT, 0);
+    running = 0;
+    printf("int handler done\n");
+}
 
 int process(jack_nframes_t nframes, void *arg) {
 	sample_t *buffers[2];
@@ -141,7 +150,7 @@ void do_polling(void) {
 	int npfd = snd_seq_poll_descriptors_count(seq_handle, POLLIN);
 	struct pollfd *pfd = (struct pollfd *)alloca(npfd * sizeof(struct pollfd));
 	snd_seq_poll_descriptors(seq_handle, pfd, npfd, POLLIN);
-	while (1) {
+	while(running) {
 		if (poll(pfd, npfd, 100000) > 0) {
 			midi_action(seq_handle);
 		}
@@ -185,6 +194,8 @@ int main(int argc, char **argv) {
 	if(optind < 0) exit(-optind);
 
 	init_jack();
+
+	signal(SIGINT, int_handler);
 
 	fmtoy_init(&fmtoy, opt_clock, sr);
 	for(int i = optind; i < argc; i++)

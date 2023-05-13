@@ -52,6 +52,14 @@ void fmtoy_init(struct fmtoy *fmtoy, int clock, int sample_rate) {
 	}
 }
 
+void fmtoy_destroy(struct fmtoy *fmtoy) {
+	for(int i = 0; i < 16; i++) {
+		if(fmtoy->channels[i].chip && fmtoy->channels[i].chip->destroy) {
+			fmtoy->channels[i].chip->destroy(fmtoy, &fmtoy->channels[i]);
+		}
+	}
+}
+
 void fmtoy_opm_voice_to_fmtoy_opn_voice(struct fmtoy_opm_voice *opmv, struct fmtoy_opn_voice *opnv) {
 	/* per chip registers */
 	opnv->lfo = opmv->lfrq >> 4;
