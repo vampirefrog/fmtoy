@@ -82,6 +82,7 @@ struct fmtoy {
 
 	struct fmtoy_channel channels[16];
 
+	int lfo_clock_phase, lfo_clock_period;
 	int clock; // chip clock
 	int pitch_bend_range; // in semitones
 };

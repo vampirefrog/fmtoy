@@ -41,6 +41,9 @@ void fmtoy_init(struct fmtoy *fmtoy, int clock, int sample_rate) {
 	fmtoy->channels[4].chip = &fmtoy_chip_ym2610b;
 	fmtoy->channels[5].chip = &fmtoy_chip_ym2612;
 
+	fmtoy->lfo_clock_period = sample_rate / 100; // every 10 ms fire the timer
+	fmtoy->lfo_clock_phase = 0;
+
 	for(int i = 0; i < 16; i++) {
 		if(fmtoy->channels[i].chip && fmtoy->channels[i].chip->init) {
 			fmtoy->channels[i].chip->init(fmtoy, fmtoy->clock, fmtoy->sample_rate, &fmtoy->channels[i]);
@@ -49,7 +52,7 @@ void fmtoy_init(struct fmtoy *fmtoy, int clock, int sample_rate) {
 }
 
 void fmtoy_opm_voice_to_fmtoy_opn_voice(struct fmtoy_opm_voice *opmv, struct fmtoy_opn_voice *opnv) {
-	/* per chip registers */	
+	/* per chip registers */
 	opnv->lfo = opmv->lfrq >> 4;
 
 	/* per channel registers */
@@ -144,24 +147,26 @@ void fmtoy_note_on(struct fmtoy *fmtoy, uint8_t channel, uint8_t note, uint8_t v
 		return;
 	}
 
-	if(channel < 16 && fmtoy->channels[channel].chip && fmtoy->channels[channel].chip->note_on) {
-		int chip_channel = find_unused_channel(fmtoy->channels[channel].chip->channels, fmtoy->channels[channel].chip->max_poliphony);
-		float pitch = float_note_freq((float)note + (float)fmtoy->channels[channel].pitch_bend * (float)fmtoy->pitch_bend_range / 8191.0);
-		fmtoy->channels[channel].chip->note_on(fmtoy, chip_channel, pitch, velocity, &fmtoy->channels[channel]);
-		fmtoy->channels[channel].chip->channels[chip_channel].frames = frame_time();
-		fmtoy->channels[channel].chip->channels[chip_channel].on = 1;
-		fmtoy->channels[channel].chip->channels[chip_channel].note = note;
-	}
+	if(channel >= 16) return;
+	if(!fmtoy->channels[channel].chip) return;
+	if(!fmtoy->channels[channel].chip->note_on) return;
+
+	int chip_channel = find_unused_channel(fmtoy->channels[channel].chip->channels, fmtoy->channels[channel].chip->max_poliphony);
+	fmtoy->channels[channel].chip->channels[chip_channel].note = note;
+	fmtoy->channels[channel].chip->channels[chip_channel].frames = frame_time();
+	fmtoy->channels[channel].chip->channels[chip_channel].on = 1;
+	float pitch = float_note_freq((float)fmtoy->channels[channel].chip->channels[chip_channel].note + (float)fmtoy->channels[channel].pitch_bend * (float)fmtoy->pitch_bend_range / 8191.0);
+	fmtoy->channels[channel].chip->note_on(fmtoy, chip_channel, pitch, velocity, &fmtoy->channels[channel]);
 }
 
 void fmtoy_note_off(struct fmtoy *fmtoy, uint8_t channel, uint8_t note, uint8_t velocity) {
-	if(channel < 16 && fmtoy->channels[channel].chip && fmtoy->channels[channel].chip->note_off) {
-		int chip_channel = find_used_channel(fmtoy->channels[channel].chip->channels, fmtoy->channels[channel].chip->max_poliphony, note);
-		if(chip_channel >= 0) {
-			fmtoy->channels[channel].chip->note_off(fmtoy, chip_channel, velocity, &fmtoy->channels[channel]);
-			fmtoy->channels[channel].chip->channels[chip_channel].on = 0;
-		}
-	}
+	if(channel >= 16) return;
+	if(!fmtoy->channels[channel].chip) return;
+	if(!fmtoy->channels[channel].chip->note_off) return;
+	int chip_channel = find_used_channel(fmtoy->channels[channel].chip->channels, fmtoy->channels[channel].chip->max_poliphony, note);
+	if(chip_channel < 0) return;
+	fmtoy->channels[channel].chip->note_off(fmtoy, chip_channel, velocity, &fmtoy->channels[channel]);
+	fmtoy->channels[channel].chip->channels[chip_channel].on = 0;
 }
 
 void fmtoy_pitch_bend(struct fmtoy *fmtoy, uint8_t channel, int bend) {
@@ -197,25 +202,55 @@ static void fmtoy_set_buf_size(struct fmtoy *fmtoy, int size) {
 	fmtoy->chip_buf_r = realloc(fmtoy->chip_buf_r, size * sizeof(*fmtoy->chip_buf_r));
 }
 
+// handle portamento and software LFO
+static void fmtoy_timer_tick(struct fmtoy *fmtoy) {
+	for(int i = 0; i < 16; i++) {
+		struct fmtoy_chip *chip = fmtoy->channels[i].chip;
+		if(!chip) continue;
+		for(int j = 0; j < chip->max_poliphony; j++) {
+			struct fmtoy_chip_channel *channel = chip->channels + j;
+			if(channel->on) {
+
+			}
+		}
+	}
+}
+
 void fmtoy_render(struct fmtoy *fmtoy, int samples) {
 	fmtoy_set_buf_size(fmtoy, samples);
-
 	memset(fmtoy->render_buf_l, 0, sizeof(fmtoy->render_buf_l[0]) * samples);
 	memset(fmtoy->render_buf_r, 0, sizeof(fmtoy->render_buf_r[0]) * samples);
 	stream_sample_t *chipBufs[2] = { fmtoy->chip_buf_l, fmtoy->chip_buf_r };
-
-#define ACCUMULATE(x, y) { x += (y); if(x > 32767) x = 32767; else if(x < -32768) x = -32768; }
-#define MIX_CHIP \
-	for(int i = 0; i < samples; i++) { \
-		ACCUMULATE(fmtoy->render_buf_l[i], fmtoy->chip_buf_l[i]); \
-		ACCUMULATE(fmtoy->render_buf_r[i], fmtoy->chip_buf_r[i]); \
-	}
-
-	for(int i = 0; i < 16; i++) {
-		if(fmtoy->channels[i].chip && fmtoy->channels[i].chip->render) {
-			fmtoy->channels[i].chip->render(fmtoy, chipBufs, samples, &fmtoy->channels[i]);
-			MIX_CHIP
+	stream_sample_t *renderBufs[2] = { fmtoy->render_buf_l, fmtoy->render_buf_r };
+	for(int s = fmtoy->lfo_clock_phase - fmtoy->lfo_clock_period; s < samples; s += fmtoy->lfo_clock_period) {
+		int render_samples = fmtoy->lfo_clock_period;
+		if(s < 0) render_samples += s;
+		else if(s + render_samples > samples) {
+			render_samples = samples - s;
+			fmtoy->lfo_clock_phase = fmtoy->lfo_clock_period - render_samples;
+			fmtoy_timer_tick(fmtoy);
 		}
+
+		for(int i = 0; i < 16; i++) {
+			if(!fmtoy->channels[i].chip) continue;
+			if(!fmtoy->channels[i].chip->render) continue;
+			fmtoy->channels[i].chip->render(fmtoy, chipBufs, render_samples, &fmtoy->channels[i]);
+			for(int j = 0; j < render_samples; j++) {
+				renderBufs[0][j] += chipBufs[0][j];
+				renderBufs[1][j] += chipBufs[1][j];
+			}
+		}
+
+		chipBufs[0] += render_samples;
+		chipBufs[1] += render_samples;
+		renderBufs[0] += render_samples;
+		renderBufs[1] += render_samples;
+	}
+	for(int i = 0; i < samples; i++) {
+		if(fmtoy->render_buf_l[i] > 32767) fmtoy->render_buf_l[i] = 32767;
+		if(fmtoy->render_buf_l[i] < -32768) fmtoy->render_buf_l[i] = -32768;
+		if(fmtoy->render_buf_r[i] > 32767) fmtoy->render_buf_r[i] = 32767;
+		if(fmtoy->render_buf_r[i] < -32768) fmtoy->render_buf_r[i] = -32768;
 	}
 }
 
