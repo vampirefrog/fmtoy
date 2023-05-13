@@ -56,6 +56,7 @@ struct fmtoy_opl_voice {
 // used for tracking poliphony
 struct fmtoy_chip_channel {
 	uint8_t on, note;
+	float pitch;
 	uint32_t frames;
 };
 
