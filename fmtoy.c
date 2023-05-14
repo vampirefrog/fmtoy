@@ -222,19 +222,21 @@ void fmtoy_render(struct fmtoy *fmtoy, int samples) {
 	stream_sample_t *chipBufs[2] = { fmtoy->chip_buf_l, fmtoy->chip_buf_r };
 	stream_sample_t *renderBufs[2] = { fmtoy->render_buf_l, fmtoy->render_buf_r };
 
-	for(int s = fmtoy->lfo_clock_phase - fmtoy->lfo_clock_period; s < samples; s += fmtoy->lfo_clock_period) {
-		int render_samples = fmtoy->lfo_clock_period;
-		fmtoy->lfo_clock_phase = 0;
-		if(s < 0) {
-			render_samples += s;
-		} else {
-			if(s + fmtoy->lfo_clock_period > samples) {
-				render_samples = samples - s;
-				fmtoy->lfo_clock_phase = fmtoy->lfo_clock_period - render_samples;
-			}
+	for(int s = 0, x = 0; s < samples; s++) {
+		if(fmtoy->lfo_clock_phase == 0) {
 			fmtoy_timer_tick(fmtoy);
 		}
-		// if(render_samples == 0) continue;
+		fmtoy->lfo_clock_phase++;
+		int render_samples = 0;
+		if(fmtoy->lfo_clock_phase >= fmtoy->lfo_clock_period) {
+			fmtoy->lfo_clock_phase = 0;
+			render_samples = s - x + 1;
+			x = s + 1;
+		} else if(s == samples - 1) {
+			render_samples = samples - x;
+		}
+
+		if(render_samples == 0) continue;
 
 		for(int i = 0; i < 16; i++) {
 			if(!fmtoy->channels[i].chip) continue;
