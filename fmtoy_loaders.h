@@ -5,7 +5,7 @@
 /* This file can be omitted when linking, if you don't need any I/O */
 
 #include "fmtoy.h"
-#include "opm_file.h"
+#include "libfmvoice/opm_file.h"
 #include "libfmvoice/bnk_file.h"
 
 void fmtoy_load_voice_file(struct fmtoy *fmtoy, char *filename);

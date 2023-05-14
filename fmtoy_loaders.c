@@ -11,9 +11,8 @@ void fmtoy_load_voice_file(struct fmtoy *fmtoy, char *filename) {
 		size_t l;
 		uint8_t *data = load_file(filename, &l);
 		opm_file_load(&opm, data, l);
-		for(int i = 0; i < OPM_FILE_MAX_VOICES; i++) {
-			if(!opm.voices[i].used) continue;
-			if(fmtoy->num_voices > 127) continue;
+		for(int i = 0; i < opm.num_voices; i++) {
+			if(i > 127) continue;
 			struct fmtoy_opm_voice opmv;
 			fmtoy_opm_voice_load_opm_file_voice(&opmv, &opm.voices[i]);
 			fmtoy_append_opm_voice(fmtoy, &opmv);
