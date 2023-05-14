@@ -8,6 +8,7 @@ void fmtoy_load_voice_file(struct fmtoy *fmtoy, char *filename) {
 	int l = strlen(filename);
 	if(!strncasecmp(filename + l - 4, ".opm", 4)) {
 		struct opm_file opm;
+		opm_file_init(&opm);
 		size_t l;
 		uint8_t *data = load_file(filename, &l);
 		opm_file_load(&opm, data, l);

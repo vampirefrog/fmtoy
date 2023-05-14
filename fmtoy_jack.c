@@ -4,7 +4,6 @@
 
 #include "cmdline.h"
 #include "tools.h"
-#include "opm_file.h"
 #include "fmtoy.h"
 #include "fmtoy_loaders.h"
 #include "midi.h"
