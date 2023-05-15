@@ -14,6 +14,7 @@
 #include "fmtoy_ym2610b.h"
 #include "fmtoy_ym2612.h"
 #include "fmtoy_ym3812.h"
+#include "fmtoy_ymf262.h"
 
 struct fmtoy *fmtoy_new(int clock, int sample_rate) {
 	struct fmtoy *t = malloc(sizeof(struct fmtoy));
@@ -41,6 +42,7 @@ void fmtoy_init(struct fmtoy *fmtoy, int clock, int sample_rate) {
 	fmtoy->channels[3].chip = &fmtoy_chip_ym2610;
 	fmtoy->channels[5].chip = &fmtoy_chip_ym2612;
 	fmtoy->channels[6].chip = &fmtoy_chip_ym3812;
+	fmtoy->channels[7].chip = &fmtoy_chip_ymf262;
 
 	fmtoy->lfo_clock_period = sample_rate / 100; // every 10 ms fire the timer
 	fmtoy->lfo_clock_phase = 0;
