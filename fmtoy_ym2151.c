@@ -23,7 +23,6 @@ static void fmtoy_ym2151_program_change(struct fmtoy *fmtoy, uint8_t program, st
 
 	// prepare for velocity
 	channel->con = v->rl_fb_con & 0x07;
-	printf("setting op_mask slot=0x%02x con=0x%02x\n", v->slot, channel->con);
 	channel->op_mask = v->slot;
 	for(int j = 0; j < 4; j++)
 		channel->tl[j] = v->operators[j].tl;
@@ -47,7 +46,6 @@ static void fmtoy_ym2151_program_change(struct fmtoy *fmtoy, uint8_t program, st
 }
 
 static void fmtoy_ym2151_set_pitch(struct fmtoy *fmtoy, uint8_t chip_channel, float pitch, struct fmtoy_channel *channel) {
-	printf("fmtoy_ym2151_set_pitch chip_channel=%d pitch=%f\n", chip_channel, pitch);
 	float kf = 3584 + 64 * 12 * log2(pitch * 3579545.0 / channel->chip->clock / 440.0);
 	int octave = (int)kf / 64 / 12;
 	int k = ((int)kf / 64) % 12;
@@ -62,16 +60,16 @@ static void fmtoy_ym2151_note_on(struct fmtoy *fmtoy, uint8_t chip_channel, floa
 	// set velocity
 	int tl = (127 - velocity) / 4;
 	// C2
-	if(channel->op_mask & 0x40)
+	if(channel->op_mask & 0x08)
 		fmwrite(fmtoy, 0x78 + chip_channel, MIN(127, channel->tl[3] + tl), channel);
 	// C1
-	if(channel->op_mask & 0x10 && channel->con >= 4)
+	if((channel->op_mask & 0x02) && channel->con >= 4)
 		fmwrite(fmtoy, 0x70 + chip_channel, MIN(127, channel->tl[2] + tl), channel);
 	// M2
-	if(channel->op_mask & 0x20 && channel->con >= 5)
+	if((channel->op_mask & 0x04) && channel->con >= 5)
 		fmwrite(fmtoy, 0x68 + chip_channel, MIN(127, channel->tl[1] + tl), channel);
 	// M1
-	if(channel->op_mask & 0x08 && channel->con >= 7)
+	if((channel->op_mask & 0x01) && channel->con >= 7)
 		fmwrite(fmtoy, 0x60 + chip_channel, MIN(127, channel->tl[0] + tl), channel);
 
 	// key on
