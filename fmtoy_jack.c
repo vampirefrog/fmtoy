@@ -69,7 +69,7 @@ void midi_action(snd_seq_t *seq_handle) {
 				break;
 			case SND_SEQ_EVENT_PGMCHANGE:
 				if(opt_verbose)
-					printf("\033[33mProgram \033[1m%d\033[0m\n", ev->data.control.value);
+					printf("\033[33mProgram \033[1m%d\033[0m %.256s\n", ev->data.control.value, fmtoy.num_voices > ev->data.control.value ? fmtoy.opm_voices[ev->data.control.value].name : "No voice");
 				for(int i = 0; i < 16; i++)
 					fmtoy_program_change(&fmtoy, i, ev->data.control.value);
 				break;
