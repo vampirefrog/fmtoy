@@ -5,7 +5,7 @@
 #include "cmdline.h"
 #include "tools.h"
 #include "fmtoy.h"
-#include "fmtoy_loaders.h"
+#include "libfmvoice/fm_voice.h"
 #include "midi.h"
 
 typedef jack_default_audio_sample_t sample_t;
@@ -70,11 +70,12 @@ void midi_action(snd_seq_t *seq_handle) {
 			case SND_SEQ_EVENT_PGMCHANGE:
 				if(opt_verbose)
 					printf("\033[33mProgram \033[1m%d\033[0m\n", ev->data.control.value);
-				fmtoy_program_change(&fmtoy, ev->data.control.channel, ev->data.control.value);
+				for(int i = 0; i < 16; i++)
+					fmtoy_program_change(&fmtoy, i, ev->data.control.value);
 				break;
 			case SND_SEQ_EVENT_CONTROLLER:
-				// if(opt_verbose)
-				// 	printf("%s: CC 0x%02x (%s) %d\n", fmtoy_channel_name(&fmtoy, ev->data.control.channel), ev->data.control.param, midi_cc_name(ev->data.control.param), ev->data.control.value);
+				if(opt_verbose)
+					printf("%s: CC 0x%02x (%s) %d\n", fmtoy_channel_name(&fmtoy, ev->data.control.channel), ev->data.control.param, midi_cc_name(ev->data.control.param), ev->data.control.value);
 				fmtoy_cc(&fmtoy, ev->data.control.channel, ev->data.control.param, ev->data.control.value);
 				break;
 		}
@@ -197,8 +198,18 @@ int main(int argc, char **argv) {
 	signal(SIGINT, int_handler);
 
 	fmtoy_init(&fmtoy, opt_clock, sr);
-	for(int i = optind; i < argc; i++)
-		fmtoy_load_voice_file(&fmtoy, argv[i]);
+	for(int i = optind; i < argc; i++) {
+		struct fm_voice_bank bank;
+		fm_voice_bank_init(&bank);
+		size_t data_len;
+		uint8_t *data = load_file(argv[i], &data_len);
+		if(!data) {
+			fprintf(stderr, "Could not open %s\n", argv[i]);
+			continue;
+		}
+		fm_voice_bank_load(&bank, data, data_len);
+		fmtoy_append_fm_voice_bank(&fmtoy, &bank);
+	}
 	for(int i = 0; i < 16; i++)
 		fmtoy_program_change(&fmtoy, i, 0);
 

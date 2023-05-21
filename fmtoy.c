@@ -4,6 +4,8 @@
 
 #include <stdio.h>
 
+#include "libfmvoice/fm_voice.h"
+
 #include "fmtoy.h"
 #include "midi.h"
 
@@ -26,9 +28,13 @@ struct fmtoy *fmtoy_new(int clock, int sample_rate) {
 }
 
 void fmtoy_init(struct fmtoy *fmtoy, int clock, int sample_rate) {
+	memset(fmtoy, 0, sizeof(*fmtoy));
+
 	fmtoy->num_voices = 0;
-	memset(fmtoy->opm_voices, 0, sizeof(fmtoy->opm_voices));
-	memset(fmtoy->opn_voices, 0, sizeof(fmtoy->opn_voices));
+	fmtoy->opl_voices = 0;
+	fmtoy->opm_voices = 0;
+	fmtoy->opn_voices = 0;
+
 	fmtoy->sample_rate = sample_rate;
 	fmtoy->clock = clock;
 	fmtoy->pitch_bend_range = 2;
@@ -62,36 +68,57 @@ void fmtoy_destroy(struct fmtoy *fmtoy) {
 	}
 }
 
-void fmtoy_load_opm_voice(struct fmtoy *fmtoy, int voice_num, struct fmtoy_opm_voice *voice) {
-	/* Load OPM voice */
-	struct fmtoy_opm_voice *opmv = &fmtoy->opm_voices[voice_num];
-	memcpy(opmv, voice, sizeof(*voice));
+int fmtoy_append_fm_voice_bank(struct fmtoy *fmtoy, struct fm_voice_bank *bank) {
+	int old_num_voices = fmtoy->num_voices;
+	fmtoy->num_voices += bank->num_opl_voices + bank->num_opm_voices + bank->num_opn_voices;
+	fmtoy->opl_voices = realloc(fmtoy->opl_voices, fmtoy->num_voices * sizeof(fmtoy->opl_voices[0]));
+	if(!fmtoy->opl_voices) return -1;
+	fmtoy->opm_voices = realloc(fmtoy->opm_voices, fmtoy->num_voices * sizeof(fmtoy->opm_voices[0]));
+	if(!fmtoy->opm_voices) return -1;
+	fmtoy->opn_voices = realloc(fmtoy->opn_voices, fmtoy->num_voices * sizeof(fmtoy->opn_voices[0]));
+	if(!fmtoy->opn_voices) return -1;
 
-	/* And convert to OPN voice as well */
-	struct fmtoy_opn_voice *opnv = &fmtoy->opn_voices[voice_num];
-	fmtoy_opm_voice_to_fmtoy_opn_voice(opmv, opnv);
-}
+	struct opl_voice *foplv = fmtoy->opl_voices + old_num_voices;
+	struct opm_voice *fopmv = fmtoy->opm_voices + old_num_voices;
+	struct opn_voice *fopnv = fmtoy->opn_voices + old_num_voices;
 
-void fmtoy_append_opm_voice(struct fmtoy *fmtoy, struct fmtoy_opm_voice *voice) {
-	if(fmtoy->num_voices > 127) return;
-	fmtoy_load_opm_voice(fmtoy, fmtoy->num_voices, voice);
-	fmtoy->num_voices++;
-}
+	for(int i = 0; i < bank->num_opl_voices; i++) {
+		struct opl_voice *oplv = &bank->opl_voices[i];
+		memcpy(foplv, oplv, sizeof(*foplv));
+		opm_voice_init(fopmv);
+		opm_voice_load_opl_voice(fopmv, oplv);
+		opn_voice_init(fopnv);
+		opn_voice_load_opl_voice(fopnv, oplv);
+		foplv++;
+		fopmv++;
+		fopnv++;
+	}
 
-void fmtoy_load_opl_voice(struct fmtoy *fmtoy, int voice_num, struct fmtoy_opl_voice *voice) {
-	/* Load OPL voice */
-	struct fmtoy_opl_voice *oplv = &fmtoy->opl_voices[voice_num];
-	memcpy(oplv, voice, sizeof(*voice));
+	for(int i = 0; i < bank->num_opm_voices; i++) {
+		struct opm_voice *opmv = &bank->opm_voices[i];
+		opl_voice_init(foplv);
+		opl_voice_load_opm_voice(foplv, opmv);
+		memcpy(fopmv, opmv, sizeof(*fopmv));
+		opn_voice_init(fopnv);
+		opn_voice_load_opm_voice(fopnv, opmv);
+		foplv++;
+		fopmv++;
+		fopnv++;
+	}
 
-	/* And convert to OPN voice as well */
-	// struct fmtoy_opn_voice *opnv = &fmtoy->opn_voices[voice_num];
-	// fmtoy_opl_voice_to_fmtoy_opn_voice(oplv, opnv);
-}
+	for(int i = 0; i < bank->num_opn_voices; i++) {
+		struct opn_voice *opnv = &bank->opn_voices[i];
+		opl_voice_init(foplv);
+		opl_voice_load_opn_voice(foplv, opnv);
+		opm_voice_init(fopmv);
+		opm_voice_load_opn_voice(fopmv, opnv);
+		memcpy(fopnv, opnv, sizeof(*fopnv));
+		foplv++;
+		fopmv++;
+		fopnv++;
+	}
 
-void fmtoy_append_opl_voice(struct fmtoy *fmtoy, struct fmtoy_opl_voice *voice) {
-	if(fmtoy->num_voices > 127) return;
-	fmtoy_load_opl_voice(fmtoy, fmtoy->num_voices, voice);
-	fmtoy->num_voices++;
+	return 0;
 }
 
 void fmtoy_program_change(struct fmtoy *fmtoy, uint8_t channel, uint8_t program) {

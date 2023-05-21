@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include "fmtoy_voice.h"
+#include "libfmvoice/fm_voice.h"
 
 #include "chips/mamedef.h"
 #include "chips/ym2151.h"
@@ -48,9 +48,9 @@ struct fmtoy {
 
 	// voices
 	int num_voices;
-	struct fmtoy_opl_voice opl_voices[128];
-	struct fmtoy_opm_voice opm_voices[128];
-	struct fmtoy_opn_voice opn_voices[128];
+	struct opl_voice *opl_voices;
+	struct opm_voice *opm_voices;
+	struct opn_voice *opn_voices;
 
 	struct fmtoy_channel channels[16];
 
@@ -62,10 +62,7 @@ struct fmtoy {
 struct fmtoy *fmtoy_new(int clock, int sample_rate);
 void fmtoy_init(struct fmtoy *fmtoy, int clock, int sample_rate);
 void fmtoy_destroy(struct fmtoy *fmtoy);
-void fmtoy_load_opm_voice(struct fmtoy *fmtoy, int voice_num, struct fmtoy_opm_voice *voice);
-void fmtoy_append_opm_voice(struct fmtoy *fmtoy, struct fmtoy_opm_voice *voice);
-void fmtoy_append_opl_voice(struct fmtoy *fmtoy, struct fmtoy_opl_voice *voice);
-void fmtoy_opm_voice_to_fmtoy_opn_voice(struct fmtoy_opm_voice *opmv, struct fmtoy_opn_voice *opnv);
+int fmtoy_append_fm_voice_bank(struct fmtoy *fmtoy, struct fm_voice_bank *bank);
 void fmtoy_note_on(struct fmtoy *fmtoy, uint8_t channel, uint8_t note, uint8_t velocity);
 void fmtoy_note_off(struct fmtoy *fmtoy, uint8_t channel, uint8_t note, uint8_t velocity);
 void fmtoy_render(struct fmtoy *fmtoy, int samples);

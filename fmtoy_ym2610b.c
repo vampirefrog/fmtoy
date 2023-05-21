@@ -20,16 +20,16 @@ static int fmtoy_ym2610b_destroy(struct fmtoy *fmtoy, struct fmtoy_channel *chan
 }
 
 static void fmtoy_ym2610b_program_change(struct fmtoy *fmtoy, uint8_t program, struct fmtoy_channel *channel) {
-	struct fmtoy_opn_voice *v = &fmtoy->opn_voices[program];
+	struct opn_voice *v = &fmtoy->opn_voices[program];
 	for(int i = 0; i < 6; i++) {
 		int base = i < 3 ? 0 : 2;
 		int c = i % 3;
 		ym2610_write(channel->chip->data, base+0, 0xb0 + c);
-		ym2610_write(channel->chip->data, base+1, v->fb_connect);
+		ym2610_write(channel->chip->data, base+1, v->fb_con);
 		ym2610_write(channel->chip->data, base+0, 0xb4 + c);
 		ym2610_write(channel->chip->data, base+1, v->lr_ams_pms);
 		for(int j = 0; j < 4; j++) {
-			struct fmtoy_opn_voice_operator *op = &v->operators[j];
+			struct opn_voice_operator *op = &v->operators[j];
 			ym2610_write(channel->chip->data, base+0, 0x30 + c + j * 4);
 			ym2610_write(channel->chip->data, base+1, op->dt_mul);
 			ym2610_write(channel->chip->data, base+0, 0x40 + c + j * 4);

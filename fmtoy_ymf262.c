@@ -23,16 +23,16 @@ static int fmtoy_ymf262_destroy(struct fmtoy *fmtoy, struct fmtoy_channel *chann
 }
 
 static void fmtoy_ymf262_program_change(struct fmtoy *fmtoy, uint8_t program, struct fmtoy_channel *channel) {
-	struct fmtoy_opl_voice *v = &fmtoy->opl_voices[program];
+	struct opl_voice *v = &fmtoy->opl_voices[program];
 	int chan_offsets[] = {
 		0x00, 0x01, 0x02,
 		0x08, 0x09, 0x0a,
 		0x10, 0x11, 0x12,
 	};
 	for(int i = 0; i < 9; i++) {
-		fmwrite(channel->chip->data, 0xc0 + i, v->fb_con);
+		fmwrite(channel->chip->data, 0xc0 + i, v->ch_fb_cnt[0]);
 		for(int j = 0; j < 2; j++) {
-			struct fmtoy_opl_voice_operator *op = &v->operators[j];
+			struct opl_voice_operator *op = &v->operators[j];
 			fmwrite(channel->chip->data, 0x20 + chan_offsets[i] + j * 3, op->am_vib_eg_ksr_mul);
 			fmwrite(channel->chip->data, 0x40 + chan_offsets[i] + j * 3, op->ksl_tl);
 			fmwrite(channel->chip->data, 0x60 + chan_offsets[i] + j * 3, op->ar_dr);
