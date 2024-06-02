@@ -1,11 +1,11 @@
 #include <jack/jack.h>
-#include <asoundlib.h>
+#include <alsa/asoundlib.h>
+#include <signal.h>
 
 #include "cmdline.h"
 #include "tools.h"
-#include "opm_file.h"
 #include "fmtoy.h"
-#include "fmtoy_loaders.h"
+#include "libfmvoice/fm_voice.h"
 #include "midi.h"
 
 typedef jack_default_audio_sample_t sample_t;
@@ -22,6 +22,14 @@ unsigned long sr;
 
 struct fmtoy fmtoy;
 
+int running = 1;
+void int_handler(int dummy) {
+    fmtoy_destroy(&fmtoy);
+    signal(SIGINT, 0);
+    running = 0;
+    printf("int handler done\n");
+}
+
 int process(jack_nframes_t nframes, void *arg) {
 	sample_t *buffers[2];
 	buffers[0] = (sample_t *) jack_port_get_buffer(output_ports[0], nframes);
@@ -30,8 +38,8 @@ int process(jack_nframes_t nframes, void *arg) {
 	fmtoy_render(&fmtoy, nframes);
 
 	for(int i = 0; i < nframes; i++) {
-		buffers[0][i] = fmtoy.render_buf_l[i] / 8191.0f;
-		buffers[1][i] = fmtoy.render_buf_r[i] / 8191.0f;
+		buffers[0][i] = fmtoy.render_buf_l[i] / 32767.0f;
+		buffers[1][i] = fmtoy.render_buf_r[i] / 32767.0f;
 	}
 
 	return 0;
@@ -61,12 +69,13 @@ void midi_action(snd_seq_t *seq_handle) {
 				break;
 			case SND_SEQ_EVENT_PGMCHANGE:
 				if(opt_verbose)
-					printf("\033[33mProgram \033[1m%d\033[0m\n", ev->data.control.value);
-				fmtoy_program_change(&fmtoy, ev->data.control.channel, ev->data.control.value);
+					printf("\033[33mProgram \033[1m%d\033[0m %.256s\n", ev->data.control.value, fmtoy.num_voices > ev->data.control.value ? fmtoy.opm_voices[ev->data.control.value].name : "No voice");
+				for(int i = 0; i < 16; i++)
+					fmtoy_program_change(&fmtoy, i, ev->data.control.value);
 				break;
 			case SND_SEQ_EVENT_CONTROLLER:
-				// if(opt_verbose)
-				// 	printf("%s: CC 0x%02x (%s) %d\n", fmtoy_channel_name(&fmtoy, ev->data.control.channel), ev->data.control.param, midi_cc_name(ev->data.control.param), ev->data.control.value);
+				if(opt_verbose)
+					printf("%s: CC 0x%02x (%s) %d\n", fmtoy_channel_name(&fmtoy, ev->data.control.channel), ev->data.control.param, midi_cc_name(ev->data.control.param), ev->data.control.value);
 				fmtoy_cc(&fmtoy, ev->data.control.channel, ev->data.control.param, ev->data.control.value);
 				break;
 		}
@@ -141,7 +150,7 @@ void do_polling(void) {
 	int npfd = snd_seq_poll_descriptors_count(seq_handle, POLLIN);
 	struct pollfd *pfd = (struct pollfd *)alloca(npfd * sizeof(struct pollfd));
 	snd_seq_poll_descriptors(seq_handle, pfd, npfd, POLLIN);
-	while (1) {
+	while(running) {
 		if (poll(pfd, npfd, 100000) > 0) {
 			midi_action(seq_handle);
 		}
@@ -186,9 +195,21 @@ int main(int argc, char **argv) {
 
 	init_jack();
 
+	signal(SIGINT, int_handler);
+
 	fmtoy_init(&fmtoy, opt_clock, sr);
-	for(int i = optind; i < argc; i++)
-		fmtoy_load_voice_file(&fmtoy, argv[i]);
+	for(int i = optind; i < argc; i++) {
+		struct fm_voice_bank bank;
+		fm_voice_bank_init(&bank);
+		size_t data_len;
+		uint8_t *data = load_file(argv[i], &data_len);
+		if(!data) {
+			fprintf(stderr, "Could not open %s\n", argv[i]);
+			continue;
+		}
+		fm_voice_bank_load(&bank, data, data_len);
+		fmtoy_append_fm_voice_bank(&fmtoy, &bank);
+	}
 	for(int i = 0; i < 16; i++)
 		fmtoy_program_change(&fmtoy, i, 0);
 

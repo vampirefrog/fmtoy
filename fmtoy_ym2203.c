@@ -17,14 +17,14 @@ static int fmtoy_ym2203_destroy(struct fmtoy *fmtoy, struct fmtoy_channel *chann
 }
 
 static void fmtoy_ym2203_program_change(struct fmtoy *fmtoy, uint8_t program, struct fmtoy_channel *channel) {
-	struct fmtoy_opn_voice *v = &fmtoy->opn_voices[program];
+	struct opn_voice *v = &fmtoy->opn_voices[program];
 	for(int i = 0; i < 3; i++) {
 		ym2203_write(channel->chip->data, 0, 0xb0 + i);
-		ym2203_write(channel->chip->data, 1, v->fb_connect);
+		ym2203_write(channel->chip->data, 1, v->fb_con);
 		ym2203_write(channel->chip->data, 0, 0xb4 + i);
 		ym2203_write(channel->chip->data, 1, v->lr_ams_pms);
 		for(int j = 0; j < 4; j++) {
-			struct fmtoy_opn_voice_operator *op = &v->operators[j];
+			struct opn_voice_operator *op = &v->operators[j];
 			ym2203_write(channel->chip->data, 0, 0x30 + i + j * 4);
 			ym2203_write(channel->chip->data, 1, op->dt_mul);
 			ym2203_write(channel->chip->data, 0, 0x40 + i + j * 4);

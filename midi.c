@@ -1,4 +1,4 @@
-#include <asoundlib.h>
+#include <alsa/asoundlib.h>
 #include <math.h>
 #include "midi.h"
 
