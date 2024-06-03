@@ -121,6 +121,35 @@ int fmtoy_append_fm_voice_bank(struct fmtoy *fmtoy, struct fm_voice_bank *bank) 
 	return 0;
 }
 
+int fmtoy_allocate_voices(struct fmtoy *fmtoy, int num_voices) {
+	fmtoy->num_voices += num_voices;
+	fmtoy->opl_voices = realloc(fmtoy->opl_voices, fmtoy->num_voices * sizeof(fmtoy->opl_voices[0]));
+	if(!fmtoy->opl_voices) return -1;
+	fmtoy->opm_voices = realloc(fmtoy->opm_voices, fmtoy->num_voices * sizeof(fmtoy->opm_voices[0]));
+	if(!fmtoy->opm_voices) return -1;
+	fmtoy->opn_voices = realloc(fmtoy->opn_voices, fmtoy->num_voices * sizeof(fmtoy->opn_voices[0]));
+	if(!fmtoy->opn_voices) return -1;
+	return 0;
+}
+
+int fmtoy_load_opm_voice(struct fmtoy *fmtoy, int voice_num, struct opm_voice *voice) {
+	if(voice_num >= fmtoy->num_voices) return -1;
+
+	struct opl_voice *oplv = fmtoy->opl_voices[voice_num];
+	opl_voice_init(oplv);
+	opl_voice_load_opm_voice(oplv, voice);
+
+	struct opm_voice *opmv = fmtoy->opm_voices[voice_num];
+	memcpy(opmv, voice, sizeof(*voice));
+
+	struct opn_voice *opnv = fmtoy->opn_voices[voice_num];
+	opn_voice_init(opnv);
+	opn_voice_load_opm_voice(opnv, voice);
+
+	return 0;
+}
+
+
 void fmtoy_program_change(struct fmtoy *fmtoy, uint8_t channel, uint8_t program) {
 	// change on all channels
 	fmtoy->channels[channel].program = program;
