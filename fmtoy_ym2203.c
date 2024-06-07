@@ -44,12 +44,11 @@ static void fmtoy_ym2203_program_change(struct fmtoy *fmtoy, uint8_t program, st
 }
 
 static void fmtoy_ym2203_set_pitch(struct fmtoy *fmtoy, int chip_channel, float pitch, struct fmtoy_channel *channel) {
-	uint8_t octave = (69 + 12 * log2(pitch / 440.0)) / 12 - 1;
-	uint16_t fnum = (144 * pitch * (1 << 19) / channel->chip->clock) / (1 << (octave - 1));
+	int block_fnum = opn_pitch_to_block_fnum(pitch, channel->chip->clock);
 	ym2203_write(channel->chip->data, 0, 0xa4 + chip_channel);
-	ym2203_write(channel->chip->data, 1, octave << 3 | (fnum >> 8 & 0x07));
+	ym2203_write(channel->chip->data, 1, block_fnum >> 8);
 	ym2203_write(channel->chip->data, 0, 0xa0 + chip_channel);
-	ym2203_write(channel->chip->data, 1, fnum & 0xff);
+	ym2203_write(channel->chip->data, 1, block_fnum & 0xff);
 }
 
 static void fmtoy_ym2203_pitch_bend(struct fmtoy *fmtoy, uint8_t chip_channel, float pitch, struct fmtoy_channel *channel) {

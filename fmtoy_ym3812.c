@@ -43,10 +43,9 @@ static void fmtoy_ym3812_program_change(struct fmtoy *fmtoy, uint8_t program, st
 }
 
 static void fmtoy_ym3812_set_pitch(struct fmtoy *fmtoy, int chip_channel, float pitch, struct fmtoy_channel *channel) {
-	uint8_t octave = (69 + 12 * log2(pitch / 440.0)) / 12 - 1;
-	uint16_t fnum = (144 * pitch * (1 << 18) / channel->chip->clock) / (1 << (octave - 1));
-	fmwrite(channel->chip->data, 0xa0 + chip_channel, fnum & 0xff);
-	fmwrite(channel->chip->data, 0xb0 + chip_channel, (channel->chip->channels[chip_channel].on ? 0x20 : 0x00) | octave << 2 | (fnum >> 8 & 0x03));
+	int block_fnum = opl_pitch_to_block_fnum(pitch, channel->chip->clock);
+	fmwrite(channel->chip->data, 0xa0 + chip_channel, block_fnum & 0xff);
+	fmwrite(channel->chip->data, 0xb0 + chip_channel, (channel->chip->channels[chip_channel].on ? 0x20 : 0x00) | block_fnum >> 8);
 }
 
 static void fmtoy_ym3812_pitch_bend(struct fmtoy *fmtoy, uint8_t chip_channel, float pitch, struct fmtoy_channel *channel) {
