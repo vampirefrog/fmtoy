@@ -135,20 +135,19 @@ int fmtoy_allocate_voices(struct fmtoy *fmtoy, int num_voices) {
 int fmtoy_load_opm_voice(struct fmtoy *fmtoy, int voice_num, struct opm_voice *voice) {
 	if(voice_num >= fmtoy->num_voices) return -1;
 
-	struct opl_voice *oplv = fmtoy->opl_voices[voice_num];
+	struct opl_voice *oplv = &fmtoy->opl_voices[voice_num];
 	opl_voice_init(oplv);
 	opl_voice_load_opm_voice(oplv, voice);
 
-	struct opm_voice *opmv = fmtoy->opm_voices[voice_num];
+	struct opm_voice *opmv = &fmtoy->opm_voices[voice_num];
 	memcpy(opmv, voice, sizeof(*voice));
 
-	struct opn_voice *opnv = fmtoy->opn_voices[voice_num];
+	struct opn_voice *opnv = &fmtoy->opn_voices[voice_num];
 	opn_voice_init(opnv);
 	opn_voice_load_opm_voice(opnv, voice);
 
 	return 0;
 }
-
 
 void fmtoy_program_change(struct fmtoy *fmtoy, uint8_t channel, uint8_t program) {
 	// change on all channels

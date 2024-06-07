@@ -64,7 +64,7 @@ void fmtoy_init(struct fmtoy *fmtoy, int clock, int sample_rate);
 void fmtoy_destroy(struct fmtoy *fmtoy);
 int fmtoy_append_fm_voice_bank(struct fmtoy *fmtoy, struct fm_voice_bank *bank);
 int fmtoy_allocate_voices(struct fmtoy *fmtoy, int num_voices);
-int fmtoy_load_opm_voice(struct fmtoy *fmtoy, struct opm_voice *voice);
+int fmtoy_load_opm_voice(struct fmtoy *fmtoy, int voice_num, struct opm_voice *voice);
 void fmtoy_note_on(struct fmtoy *fmtoy, uint8_t channel, uint8_t note, uint8_t velocity);
 void fmtoy_note_off(struct fmtoy *fmtoy, uint8_t channel, uint8_t note, uint8_t velocity);
 void fmtoy_render(struct fmtoy *fmtoy, int samples);
