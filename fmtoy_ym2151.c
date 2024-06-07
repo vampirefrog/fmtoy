@@ -46,12 +46,9 @@ static void fmtoy_ym2151_program_change(struct fmtoy *fmtoy, uint8_t program, st
 }
 
 static void fmtoy_ym2151_set_pitch(struct fmtoy *fmtoy, uint8_t chip_channel, float pitch, struct fmtoy_channel *channel) {
-	float kf = 3584 + 64 * 12 * log2(pitch * 3579545.0 / channel->chip->clock / 440.0);
-	int octave = (int)kf / 64 / 12;
-	int k = ((int)kf / 64) % 12;
-	const uint8_t opm_notes[12] = { 0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14 };
-	fmwrite(fmtoy, 0x28 + chip_channel, octave << 4 | opm_notes[k], channel);
-	fmwrite(fmtoy, 0x30 + chip_channel, (int)kf % 64 << 2, channel);
+	int kc_kf = opm_pitch_to_kc_kf(pitch, channel->chip->clock);
+	fmwrite(fmtoy, 0x28 + chip_channel, kc_kf >> 8, channel);
+	fmwrite(fmtoy, 0x30 + chip_channel, kc_kf & 0xff, channel);
 }
 
 static void fmtoy_ym2151_note_on(struct fmtoy *fmtoy, uint8_t chip_channel, float pitch, uint8_t velocity, struct fmtoy_channel *channel) {
