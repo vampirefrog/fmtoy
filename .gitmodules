@@ -1,6 +1,9 @@
 [submodule "libfmvoice"]
 	path = libfmvoice
 	url = https://github.com/vampirefrog/libfmvoice.git
+[submodule "libvgm"]
+	path = libvgm
+	url = https://github.com/ValleyBell/libvgm.git
 [submodule "midilib"]
 	path = midilib
 	url = https://github.com/vampirefrog/midilib.git
