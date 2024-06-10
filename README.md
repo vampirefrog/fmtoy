@@ -24,7 +24,18 @@ You can get a bunch of `.OPM` files from [KVR forum](https://www.kvraudio.com/fo
 Please try `./fmtoy_jack --help` to see a list of command-line options.
 
 
+Building
+--------
 
+```sh
+make
+```
+
+Emscripten:
+
+```sh
+emmake make wasm
+```
 
 
 Licensing
