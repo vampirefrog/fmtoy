@@ -6,7 +6,7 @@
 #include "tools.h"
 #include "fmtoy.h"
 #include "libfmvoice/fm_voice.h"
-#include "midi.h"
+#include "midilib/midi.h"
 
 typedef jack_default_audio_sample_t sample_t;
 
@@ -52,16 +52,22 @@ void midi_action(snd_seq_t *seq_handle) {
 		snd_seq_event_input(seq_handle, &ev);
 		switch (ev->type) {
 			case SND_SEQ_EVENT_NOTEON:
-				if(opt_verbose)
-					printf("%s: Note \033[32mON\033[0m  %s%d (%d) %d\n", fmtoy_channel_name(&fmtoy, ev->data.control.channel), midi_note_name(ev->data.note.note), midi_note_octave(ev->data.note.note), ev->data.note.note, ev->data.note.velocity);
+				if(opt_verbose) {
+					uint8_t octave;
+					const char *note_name = midi_note_name(ev->data.note.note, &octave);
+					printf("%s: Note \033[32mON\033[0m  %s%d (%d) %d\n", fmtoy_channel_name(&fmtoy, ev->data.control.channel), note_name, octave, ev->data.note.note, ev->data.note.velocity);
+				}
 				if(ev->data.note.velocity > 0)
 					fmtoy_note_on(&fmtoy, ev->data.note.channel, ev->data.note.note, ev->data.note.velocity);
 				else
 					fmtoy_note_off(&fmtoy, ev->data.note.channel, ev->data.note.note, ev->data.note.velocity);
 				break;
 			case SND_SEQ_EVENT_NOTEOFF:
-				if(opt_verbose)
-					printf("%s: Note \033[31mOFF\033[0m %s%d (%d) %d\n", fmtoy_channel_name(&fmtoy, ev->data.control.channel), midi_note_name(ev->data.note.note), midi_note_octave(ev->data.note.note), ev->data.note.note, ev->data.note.velocity);
+				if(opt_verbose) {
+					uint8_t octave;
+					const char *note_name = midi_note_name(ev->data.note.note, &octave);
+					printf("%s: Note \033[31mOFF\033[0m %s%d (%d) %d\n", fmtoy_channel_name(&fmtoy, ev->data.control.channel), note_name, octave, ev->data.note.note, ev->data.note.velocity);
+				}
 				fmtoy_note_off(&fmtoy, ev->data.note.channel, ev->data.note.note, ev->data.note.velocity);
 				break;
 			case SND_SEQ_EVENT_PITCHBEND:

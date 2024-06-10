@@ -2,38 +2,32 @@ CFLAGS=-ggdb -Wall $(shell pkg-config alsa jack --cflags)
 CC=gcc
 CXX=g++
 
-PROGS=fmtoy_jack
-all: $(PROGS)
+all: libfmtoy.a fmtoy_jack
 
-LIBS=-lz
+LIBS=-lz -lm
 ifneq (,$(findstring MINGW,$(shell uname -s)))
 LIBS+=-liconv -lws2_32
 endif
 
-.SECONDEXPANSION:
-fmtoy_jack_SRCS=fmtoy_jack.c fmtoy.c cmdline.c tools.c midi.c \
-	chips/ym2151.c chips/fm.c chips/fm2612.c chips/ymdeltat.c chips/fmopl.c chips/ymf262.c \
-	fmtoy_ym2151.c fmtoy_ym2203.c fmtoy_ym2608.c fmtoy_ym2610.c fmtoy_ym2610b.c fmtoy_ym2612.c fmtoy_ym3812.c fmtoy_ymf262.c
-fmtoy_jack_EXTRA=libfmvoice/libfmvoice.a
-fmtoy_jack_LIBS=$(shell pkg-config alsa jack --libs)
+libfmtoy.a: fmtoy.o \
+	chips/ym2151.o chips/fm.o chips/fm2612.o chips/ymdeltat.o chips/fmopl.o chips/ymf262.o \
+	fmtoy_ym2151.o fmtoy_ym2203.o fmtoy_ym2608.o fmtoy_ym2610.o fmtoy_ym2610b.o fmtoy_ym2612.o fmtoy_ym3812.o fmtoy_ymf262.o
+	ar cr $@ $^
 
-OBJS=$(patsubst %.c,%.o,$(patsubst %.cpp,%.o,$(foreach prog,$(PROGS),$(prog).cpp $($(prog)_SRCS))))
+fmtoy_jack: fmtoy_jack.c cmdline.c tools.c libfmtoy.a libfmvoice/libfmvoice.a midilib/libmidi.a
+	$(CC) $^ -o $@ $(CFLAGS) $(LIBS) $(shell pkg-config alsa jack --libs)
 
-$(OBJS): Makefile
-
-$(PROGS): $$(sort $$@.o $$(patsubst %.c,%.o,$$(patsubst %.cpp,%.o,$$($$@_SRCS)))) $$($$@_EXTRA)
-	$(CXX) $^ -o $@ $(CFLAGS) $($@_CFLAGS) $(LIBS) $($@_LIBS)
-
-%.o: %.cpp
-	$(CXX) -MMD -c $< -o $@ $(CFLAGS)
 %.o: %.c
 	$(CC) -MMD -c $< -o $@ $(CFLAGS) $($@_CFLAGS)
 
+midilib/libmidi.a:
+	cd midilib && make libmidi.a
 libfmvoice/libfmvoice.a:
 	cd libfmvoice && make libfmvoice.a
 
 -include $(OBJS:.o=.d)
 
 clean:
-	rm -f $(PROGS) $(addsuffix .exe,$(PROGS)) *.o *.d chips/*.o chips/*.d
+	rm -f *.o *.d *.a fmtoy_jack
 	cd libfmvoice && make clean
+	cd midilib && make clean

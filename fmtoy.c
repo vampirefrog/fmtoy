@@ -5,9 +5,9 @@
 #include <stdio.h>
 
 #include "libfmvoice/fm_voice.h"
+#include "midilib/midi.h"
 
 #include "fmtoy.h"
-#include "midi.h"
 
 #include "fmtoy_ym2151.h"
 #include "fmtoy_ym2203.h"
