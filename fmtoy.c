@@ -5,7 +5,6 @@
 #include <stdio.h>
 
 #include "libfmvoice/fm_voice.h"
-#include "midilib/midi.h"
 
 #include "fmtoy.h"
 
