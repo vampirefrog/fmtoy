@@ -1,6 +1,7 @@
 fmtoy_jack
 *.d
 *.o
+*.a
 *.sublime-workspace
 *.js
 *.wasm
