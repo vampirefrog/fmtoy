@@ -47,6 +47,7 @@ void fmtoy_init(struct fmtoy *fmtoy, int clock, int sample_rate) {
 	fmtoy->channels[1].chip = &fmtoy_chip_ym2203;
 	fmtoy->channels[2].chip = &fmtoy_chip_ym2608;
 	fmtoy->channels[3].chip = &fmtoy_chip_ym2610;
+	fmtoy->channels[4].chip = &fmtoy_chip_ym2610b;
 	fmtoy->channels[5].chip = &fmtoy_chip_ym2612;
 	fmtoy->channels[6].chip = &fmtoy_chip_ym3812;
 	fmtoy->channels[7].chip = &fmtoy_chip_ymf262;
