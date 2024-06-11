@@ -28,9 +28,6 @@ static int fmtoy_ym2151_init(struct fmtoy *fmtoy, int clock, int sample_rate, st
 
 	devinf->devDef->Reset(devinf->dataPtr);
 
-	// DEVFUNC_WRITE_ALL mutefn;
-	// SndEmu_GetDeviceFunc(devinf->devDef, RWF_REGISTER | RWF_QUICKWRITE, DEVRW_A8D8, 0, (void**)&writefn);
-
 	return 0;
 }
 
