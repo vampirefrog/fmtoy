@@ -1,13 +1,8 @@
-#include <math.h>
 #include "fmtoy.h"
 #include "fmtoy_ym2151.h"
-#include "tools.h"
-
-#include "libvgm/emu/EmuStructs.h"
 #include "libvgm/emu/SoundEmu.h"
 #include "libvgm/emu/SoundDevs.h"
-#include "libvgm/emu/EmuCores.h"
-#include "libvgm/emu/cores/ym2151.h"
+#include "tools.h"
 
 static int fmtoy_ym2151_init(struct fmtoy *fmtoy, int clock, int sample_rate, struct fmtoy_channel *channel) {
 	channel->chip->clock = clock;
