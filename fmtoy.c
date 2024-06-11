@@ -17,6 +17,8 @@
 #include "fmtoy_ym3812.h"
 #include "fmtoy_ymf262.h"
 
+#include "midilib/midi.h"
+
 struct fmtoy *fmtoy_new(int clock, int sample_rate) {
 	struct fmtoy *t = malloc(sizeof(struct fmtoy));
 	if(!t) return 0;
@@ -190,10 +192,6 @@ static uint32_t frame_time() {
 	return t++;
 }
 
-static float float_note_freq(float note) {
-	return (440.0 / 32.0) * (pow(2.0, ((note - 9.0) / 12.0)));
-}
-
 void fmtoy_note_on(struct fmtoy *fmtoy, uint8_t channel, uint8_t note, uint8_t velocity) {
 	if(velocity == 0) {
 		fmtoy_note_off(fmtoy, channel, note, velocity);
@@ -208,7 +206,7 @@ void fmtoy_note_on(struct fmtoy *fmtoy, uint8_t channel, uint8_t note, uint8_t v
 	fmtoy->channels[channel].chip->channels[chip_channel].note = note;
 	fmtoy->channels[channel].chip->channels[chip_channel].frames = frame_time();
 	fmtoy->channels[channel].chip->channels[chip_channel].on = 1;
-	float pitch = float_note_freq((float)fmtoy->channels[channel].chip->channels[chip_channel].note + (float)fmtoy->channels[channel].pitch_bend * (float)fmtoy->pitch_bend_range / 8191.0);
+	float pitch = midi_note_freq(fmtoy->channels[channel].chip->channels[chip_channel].note, (float)fmtoy->channels[channel].pitch_bend * (float)fmtoy->pitch_bend_range / 8191.0);
 	fmtoy->channels[channel].chip->channels[chip_channel].pitch = pitch;
 	fmtoy->channels[channel].chip->note_on(fmtoy, chip_channel, pitch, velocity, &fmtoy->channels[channel]);
 }
@@ -228,7 +226,7 @@ void fmtoy_pitch_bend(struct fmtoy *fmtoy, uint8_t channel, int bend) {
 	if(channel < 16 && fmtoy->channels[channel].chip && fmtoy->channels[channel].chip->pitch_bend) {
 		for(int i = 0; i < fmtoy->channels[channel].chip->max_poliphony; i++) {
 			if(!fmtoy->channels[channel].chip->channels[i].on) continue;
-			float pitch = float_note_freq((float)fmtoy->channels[channel].chip->channels[i].note + (float)fmtoy->channels[channel].pitch_bend * (float)fmtoy->pitch_bend_range / 8191.0);
+			float pitch = midi_note_freq(fmtoy->channels[channel].chip->channels[i].note, (float)fmtoy->channels[channel].pitch_bend * (float)fmtoy->pitch_bend_range / 8191.0);
 			fmtoy->channels[channel].chip->channels[i].pitch = pitch;
 			fmtoy->channels[channel].chip->pitch_bend(fmtoy, i, pitch, &fmtoy->channels[channel]);
 		}
