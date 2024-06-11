@@ -5,9 +5,7 @@
 
 #include "libfmvoice/fm_voice.h"
 
-#include "chips/mamedef.h"
-#include "chips/ym2151.h"
-#include "chips/fm.h"
+typedef int32_t stream_sample_t;
 
 // used for tracking poliphony
 struct fmtoy_chip_channel {
