@@ -56,7 +56,11 @@ void fmtoy_init(struct fmtoy *fmtoy, int clock, int sample_rate) {
 
 	for(int i = 0; i < 16; i++) {
 		if(fmtoy->channels[i].chip && fmtoy->channels[i].chip->init) {
-			fmtoy->channels[i].chip->init(fmtoy, fmtoy->clock, fmtoy->sample_rate, &fmtoy->channels[i]);
+			int r = fmtoy->channels[i].chip->init(fmtoy, fmtoy->clock, fmtoy->sample_rate, &fmtoy->channels[i]);
+			if(r) {
+				fprintf(stderr, "Could not init chip %d: %d\n", i, r);
+				fmtoy->channels[i].chip = 0;
+			}
 		}
 	}
 }
