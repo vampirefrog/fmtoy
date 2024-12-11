@@ -1,6 +1,8 @@
 FM Toy
 ========
 
+![Project status](https://img.shields.io/badge/Project%20status-Beta-blue.svg)
+
 [![Linux Build](https://github.com/vampirefrog/fmtoy/actions/workflows/linux-jack.yml/badge.svg)](https://github.com/vampirefrog/fmtoy/actions/workflows/linux-jack.yml)
 
 Yamaha FM sound synthesis emulation based MIDI synthesizer.
