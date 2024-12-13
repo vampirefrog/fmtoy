@@ -1,7 +1,7 @@
 FM Toy
 ========
 
-![Project status](https://img.shields.io/badge/Project%20status-Beta-blue.svg)
+![Project status](https://img.shields.io/badge/Project%20status-Beta-blue.svg) ![License](https://img.shields.io/github/license/vampirefrog/fmtoy?color=green)
 
 [![Linux Build](https://github.com/vampirefrog/fmtoy/actions/workflows/linux-jack.yml/badge.svg)](https://github.com/vampirefrog/fmtoy/actions/workflows/linux-jack.yml)
 
