@@ -1,7 +1,7 @@
 FM Toy
 ========
 
-![Project status](https://img.shields.io/badge/Project%20status-Beta-blue.svg) ![License](https://img.shields.io/github/license/vampirefrog/fmtoy?color=green)
+[![Project status](https://img.shields.io/badge/Project%20status-Beta-blue.svg)](.) [![GitHub latest commit](https://badgen.net/github/last-commit/vampirefrog/fmtoy)](https://GitHub.com/vampirefrog/fmtoy/commit/) [![GitHub release](https://img.shields.io/github/release/vampirefrog/fmtoy.svg)](https://GitHub.com/vampirefrog/fmtoy/releases/) [![License](https://img.shields.io/github/license/vampirefrog/fmtoy?color=green)](LICENSE)
 
 [![Linux Build](https://github.com/vampirefrog/fmtoy/actions/workflows/linux-jack.yml/badge.svg)](https://github.com/vampirefrog/fmtoy/actions/workflows/linux-jack.yml)
 
